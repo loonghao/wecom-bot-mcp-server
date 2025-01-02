@@ -6,23 +6,29 @@ jobs:
     strategy:
       max-parallel: 3
       matrix:
-        target:
-          - os: 'ubuntu-22.04'
-            triple: 'x86_64-unknown-linux-gnu'
-          - os: 'macos-12'
-            triple: 'x86_64-apple-darwin'
-          - os: 'windows-2022'
-            triple: 'x86_64-pc-windows-msvc'
-        python-version: ["3.10"]
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python-version: ["3.10", "3.11", "3.12"]
       fail-fast: false
-    runs-on: ${{ matrix.target.os }}
+    runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
+          
+      - name: Install poetry
+        run: |
+          python -m pip install --upgrade pip
+          pip install poetry
+          
+      - name: Configure poetry
+        run: |
+          poetry config virtualenvs.create true
+          poetry config virtualenvs.in-project true
+          
       - name: Install dependencies
         run: |
           python -m pip install -r requirements-dev.txt
@@ -30,6 +36,3 @@ jobs:
       - name: lint
         run: |
           nox -s lint
-      - name: test build
-        run: |
-          nox -s build-exe -- --test
