@@ -1,17 +1,31 @@
 # Import third-party modules
 import nox
+
 from nox_actions.utils import PACKAGE_NAME
 
 
 def lint(session: nox.Session) -> None:
-    session.install("isort", "ruff")
-    session.run("isort", "--check-only", PACKAGE_NAME)
-    session.run("ruff", "check")
+    """Run linting checks."""
+    session.install("ruff", "black", "isort", "mypy")
+
+    # Run ruff checks
+    session.run("ruff", "check", ".")
+    session.run("ruff", "format", "--check", ".")
+
+    # Run isort checks
+    session.run("isort", "--check-only", ".")
+
+    # Run mypy checks
+    session.run("mypy", f"src/{PACKAGE_NAME}", "--strict")
 
 
 def lint_fix(session: nox.Session) -> None:
-    session.install("isort", "ruff", "pre-commit", "autoflake")
-    session.run("ruff", "check", "--fix")
+    """Fix linting issues."""
+    session.install("ruff", "black", "isort")
+
+    # Fix imports
     session.run("isort", ".")
-    session.run("pre-commit", "run", "--all-files")
-    session.run("autoflake", "--in-place", "--remove-all-unused-imports", "--remove-unused-variables")
+
+    # Fix code style
+    session.run("ruff", "check", "--fix", ".")
+    session.run("ruff", "format", ".")

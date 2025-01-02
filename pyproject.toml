@@ -1,0 +1,155 @@
+[tool.poetry]
+name = "wecom-bot-mcp-server"
+version = "0.0.1"
+description = "WeCom Bot MCP Server - A Python server for WeCom (WeChat Work) bot following the Model Context Protocol (MCP)"
+authors = ["longhao <hal.long@outlook.com>"]
+readme = "README.md"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+fastmcp = ">=0.4.1"
+httpx = ">=0.24.1"
+uvicorn = "^0.34.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.4.3"
+pytest-cov = "^4.1.0"
+pytest-asyncio = "^0.23.2"
+ruff = "^0.1.8"
+mypy = "^1.7.1"
+nox = "^2023.4.22"
+black = "^23.12.1"
+isort = "^5.13.2"
+commitizen = "^3.13.0"
+
+[tool.poetry.scripts]
+wecom-bot-mcp-server = "wecom_bot_mcp_server.server:main"
+
+[tool.commitizen]
+name = "cz_conventional_commits"
+version = "0.0.1"
+tag_format = "v$version"
+version_files = [
+    "pyproject.toml:version",
+    "wecom_bot_mcp_server/__version__.py"
+]
+
+[tool.pytest.ini_options]
+addopts = "--cov=wecom_bot_mcp_server --cov-report=xml --cov-report=term-missing"
+testpaths = ["tests"]
+asyncio_mode = "strict"
+
+[tool.coverage.run]
+source = ["wecom_bot_mcp_server"]
+branch = true
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if __name__ == .__main__.:",
+    "raise NotImplementedError",
+    "if TYPE_CHECKING:",
+]
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+
+[tool.black]
+line-length = 120
+target-version = ['py310', 'py311', 'py312']
+include = '\.pyi?$'
+exclude = '''
+(
+  /(
+      \.eggs         # exclude a few common directories in the
+    | \.git          # root of the project
+    | \.hg
+    | \.mypy_cache
+    | \.tox
+    | \.nox
+    | \.venv
+    | _build
+    | buck-out
+    | build
+    | dist
+  )/
+)
+'''
+
+[tool.isort]
+profile = "black"
+atomic = true
+include_trailing_comma = true
+lines_after_imports = 2
+lines_between_types = 1
+use_parentheses = true
+src_paths = ["src", "tests"]
+filter_files = true
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort
+    "C",  # flake8-comprehensions
+    "B",  # flake8-bugbear
+]
+ignore = []
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]
+"noxfile.py" = ["E402", "I001"]
+
+[tool.nox]
+sessions = ["lint", "test"]
+
+[tool.nox.session.lint]
+deps = [
+    "ruff",
+    "black",
+    "isort",
+    "mypy",
+]
+commands = [
+    "ruff check .",
+    "ruff format --check .",
+    "mypy src/wecom_bot_mcp_server --strict"
+]
+
+[tool.nox.session.test]
+deps = [
+    "pytest",
+    "pytest-cov",
+    "pytest-asyncio",
+]
+commands = [
+    "pytest tests/ --cov=wecom_bot_mcp_server"
+]
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

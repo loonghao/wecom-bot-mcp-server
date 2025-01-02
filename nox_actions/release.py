@@ -6,8 +6,8 @@ import zipfile
 
 # Import third-party modules
 import nox
-from nox_actions.utils import PACKAGE_NAME
-from nox_actions.utils import THIS_ROOT
+
+from nox_actions.utils import PACKAGE_NAME, THIS_ROOT
 
 
 @nox.session(name="build-exe", reuse_venv=True)
@@ -39,7 +39,8 @@ def build_exe(session: nox.Session) -> None:
             with zipfile.ZipFile(zip_file, "w") as zip_obj:
                 for root, _, files in os.walk(platform_dir):
                     for file in files:
-                        zip_obj.write(os.path.join(root, file),
-                                      os.path.relpath(os.path.join(root, file),
-                                                      os.path.join(platform_dir, ".")))
-            print("Saving to {zipfile}".format(zipfile=zip_file))
+                        zip_obj.write(
+                            os.path.join(root, file),
+                            os.path.relpath(os.path.join(root, file), os.path.join(platform_dir, ".")),
+                        )
+            print(f"Saving to {zip_file}")
