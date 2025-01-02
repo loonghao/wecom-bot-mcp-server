@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "wecom-bot-mcp-server"
-version = "0.0.1"
+version = "0.1.0"
 description = "WeCom Bot MCP Server - A Python server for WeCom (WeChat Work) bot following the Model Context Protocol (MCP)"
 authors = ["longhao <hal.long@outlook.com>"]
 readme = "README.md"
@@ -32,7 +32,7 @@ wecom-bot-mcp-server = "wecom_bot_mcp_server.server:main"
 
 [tool.commitizen]
 name = "cz_conventional_commits"
-version = "0.0.1"
+version = "0.1.0"
 tag_format = "v$version"
 version_files = [
     "pyproject.toml:version",
