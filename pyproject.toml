@@ -25,7 +25,7 @@ mypy = "^1.7.1"
 nox = "^2023.4.22"
 black = "^23.12.1"
 isort = "^5.13.2"
-commitizen = "^3.13.0"
+commitizen = "^4.0.0"
 
 [tool.poetry.scripts]
 wecom-bot-mcp-server = "wecom_bot_mcp_server.server:main"
