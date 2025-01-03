@@ -4,6 +4,7 @@
 [![codecov](https://codecov.io/gh/loonghao/wecom-bot-mcp-server/branch/main/graph/badge.svg)](https://codecov.io/gh/loonghao/wecom-bot-mcp-server)
 [![PyPI version](https://badge.fury.io/py/wecom-bot-mcp-server.svg)](https://badge.fury.io/py/wecom-bot-mcp-server)
 [![Python Version](https://img.shields.io/pypi/pyversions/wecom-bot-mcp-server.svg)](https://pypi.org/project/wecom-bot-mcp-server/)
+[![smithery badge](https://smithery.ai/badge/wecom-bot-mcp-server)](https://smithery.ai/server/wecom-bot-mcp-server)
 
 A WeCom (WeChat Work) bot server implemented with FastMCP, supporting message sending via webhook.
 
@@ -19,6 +20,14 @@ A WeCom (WeChat Work) bot server implemented with FastMCP, supporting message se
 - Comprehensive unit tests
 
 ## Installation
+
+### Installing via Smithery
+
+To install WeCom Bot Server for Claude Desktop automatically via [Smithery](https://smithery.ai/server/wecom-bot-mcp-server):
+
+```bash
+npx -y @smithery/cli install wecom-bot-mcp-server --client claude
+```
 
 Using pip:
 
@@ -172,6 +181,14 @@ Issues and Pull Requests are welcome!
 - 全面的单元测试
 
 ## 安装
+
+### 使用 Smithery 安装
+
+通过 [Smithery](https://smithery.ai/server/wecom-bot-mcp-server) 为 Claude Desktop 自动安装 WeCom Bot Server：
+
+```bash
+npx -y @smithery/cli install wecom-bot-mcp-server --client claude
+```
 
 使用 pip 安装：
 
