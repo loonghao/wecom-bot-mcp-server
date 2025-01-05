@@ -18,6 +18,8 @@ A WeCom (WeChat Work) bot server implemented with FastMCP, supporting message se
 - Complete type hints
 - Comprehensive unit tests
 
+<a href="https://glama.ai/mcp/servers/amr2j23lbk"><img width="380" height="200" src="https://glama.ai/mcp/servers/amr2j23lbk/badge" alt="WeCom Bot Server MCP server" /></a>
+
 ## Installation
 
 Using pip:
