@@ -11,11 +11,7 @@ from unittest.mock import MagicMock, patch
 # Import third-party modules
 import pytest
 
-from wecom_bot_mcp_server.server import (
-    get_message_history,
-    message_history,
-    send_message,
-)
+from wecom_bot_mcp_server.server import get_message_history, message_history, send_message
 
 
 @pytest.fixture(autouse=True)
