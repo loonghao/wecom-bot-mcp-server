@@ -20,3 +20,7 @@ target/*
 /build/
 /coverage.xml
 /.zip/
+/.windsurfrules
+/dist/
+/run-ide.bat
+/.venv/

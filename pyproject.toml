@@ -1,48 +1,47 @@
-[tool.poetry]
+[project]
 name = "wecom-bot-mcp-server"
 version = "0.1.0"
-description = "WeCom Bot MCP Server - A Python server for WeCom (WeChat Work) bot following the Model Context Protocol (MCP)"
-authors = ["longhao <hal.long@outlook.com>"]
+description = "A WeCom bot server that follows the Model Context Protocol (MCP)"
+authors = [
+    { name = "Codeium", email = "support@codeium.com" },
+]
+dependencies = [
+    "httpx>=0.25.2",
+    "python-dotenv>=1.0.0",
+    "fastmcp>=0.1.0",
+    "platformdirs>=4.1.0",
+    "pydantic>=2.5.2",
+    "uvicorn>=0.34.0",
+]
+requires-python = ">=3.10"
 readme = "README.md"
-classifiers = [
-    "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: MIT License",
-    "Operating System :: OS Independent",
+license = { text = "MIT" }
+
+[project.optional-dependencies]
+test = [
+    "pytest>=7.4.3",
+    "pytest-asyncio>=0.23.2",
+    "pytest-cov>=4.1.0",
+    "pytest-mock>=3.12.0",
+    "coverage>=7.3.2",
+]
+dev = [
+    "black>=23.11.0",
+    "isort>=5.12.0",
+    "mypy>=1.7.1",
+    "pylint>=3.0.2",
+    "ruff>=0.1.6",
 ]
 
-[tool.poetry.dependencies]
-python = "^3.10"
-fastmcp = ">=0.4.1"
-httpx = ">=0.24.1"
-uvicorn = "^0.34.0"
-
-[tool.poetry.group.dev.dependencies]
-pytest = "^7.4.3"
-pytest-cov = "^4.1.0"
-pytest-asyncio = "^0.23.2"
-ruff = "^0.1.8"
-mypy = "^1.7.1"
-nox = "^2023.4.22"
-black = "^23.12.1"
-isort = "^5.13.2"
-commitizen = "^3.13.0"
-
-[tool.poetry.scripts]
-wecom-bot-mcp-server = "wecom_bot_mcp_server.server:main"
-
-[tool.commitizen]
-name = "cz_conventional_commits"
-version = "0.1.0"
-tag_format = "v$version"
-version_files = [
-    "pyproject.toml:version",
-    "wecom_bot_mcp_server/__version__.py"
-]
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [tool.pytest.ini_options]
-addopts = "--cov=wecom_bot_mcp_server --cov-report=xml --cov-report=term-missing"
+asyncio_mode = "auto"
 testpaths = ["tests"]
-asyncio_mode = "strict"
+python_files = ["test_*.py"]
+addopts = "--cov=wecom_bot_mcp_server --cov-report=term-missing"
 
 [tool.coverage.run]
 source = ["wecom_bot_mcp_server"]
@@ -55,11 +54,20 @@ exclude_lines = [
     "if __name__ == .__main__.:",
     "raise NotImplementedError",
     "if TYPE_CHECKING:",
+    "pass",
 ]
+
+[tool.black]
+line-length = 120
+target-version = ["py310"]
+
+[tool.isort]
+profile = "black"
+line_length = 120
+multi_line_output = 3
 
 [tool.mypy]
 python_version = "3.10"
-strict = true
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
@@ -72,84 +80,28 @@ warn_unused_ignores = true
 warn_no_return = true
 warn_unreachable = true
 
-[tool.black]
-line-length = 120
-target-version = ['py310', 'py311', 'py312']
-include = '\.pyi?$'
-exclude = '''
-(
-  /(
-      \.eggs         # exclude a few common directories in the
-    | \.git          # root of the project
-    | \.hg
-    | \.mypy_cache
-    | \.tox
-    | \.nox
-    | \.venv
-    | _build
-    | buck-out
-    | build
-    | dist
-  )/
-)
-'''
-
-[tool.isort]
-profile = "black"
-atomic = true
-include_trailing_comma = true
-lines_after_imports = 2
-lines_between_types = 1
-use_parentheses = true
-src_paths = ["src", "tests"]
-filter_files = true
-
 [tool.ruff]
 line-length = 120
 target-version = "py310"
-src = ["src", "tests"]
-
-[tool.ruff.lint]
-select = [
-    "E",  # pycodestyle errors
-    "W",  # pycodestyle warnings
-    "F",  # pyflakes
-    "I",  # isort
-    "C",  # flake8-comprehensions
-    "B",  # flake8-bugbear
-]
+select = ["E", "F", "B", "I"]
 ignore = []
 
-[tool.ruff.lint.per-file-ignores]
+[tool.ruff.per-file-ignores]
 "__init__.py" = ["F401"]
-"noxfile.py" = ["E402", "I001"]
 
-[tool.nox]
-sessions = ["lint", "test"]
+[project.scripts]
+wecom-bot-mcp-server = "wecom_bot_mcp_server.server:main"
 
-[tool.nox.session.lint]
-deps = [
-    "ruff",
-    "black",
-    "isort",
-    "mypy",
-]
-commands = [
-    "ruff check .",
-    "ruff format --check .",
-    "mypy src/wecom_bot_mcp_server --strict"
+[tool.commitizen]
+name = "cz_conventional_commits"
+version = "0.1.0"
+tag_format = "v$version"
+version_files = [
+    "pyproject.toml:version",
 ]
 
-[tool.nox.session.test]
-deps = [
-    "pytest",
-    "pytest-cov",
-    "pytest-asyncio",
-]
-commands = [
-    "pytest tests/ --cov=wecom_bot_mcp_server"
-]
+[tool.hatch.build.targets.wheel]
+packages = ["src/wecom_bot_mcp_server"]
 
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+[tool.hatch.metadata]
+allow-direct-references = true

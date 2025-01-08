@@ -2,7 +2,6 @@
 import os
 import sys
 
-
 ROOT = os.path.dirname(__file__)
 
 # Ensure project is importable
@@ -13,7 +12,6 @@ if ROOT not in sys.path:
 import nox
 
 from nox_actions import codetest, lint
-
 
 # Register nox sessions
 nox.session(lint.lint, name="lint")
