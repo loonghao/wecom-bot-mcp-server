@@ -2,187 +2,58 @@
 
 This module provides a server implementation for WeCom bot that follows the Model Context Protocol (MCP).
 It handles message communication with WeCom webhook API and maintains message history.
-
-The server provides two main functionalities:
-1. Send messages to WeCom via webhook (Tool)
-2. Access message history (Resource)
-
-Example:
-    To start the server:
-
-    ```python
-    if __name__ == "__main__":
-        mcp.run()
-    ```
 """
 
 # Import built-in modules
-import codecs
 import json
-import logging
 import os
 from http import HTTPStatus
-
-import httpx
+from typing import Any, Dict, List
 
 # Import third-party modules
+import httpx
+from dotenv import load_dotenv
 from fastmcp import Context, FastMCP
+from typing import Annotated
 
-# Set up logging
-logger = logging.getLogger("mcp_wechat_server")
-logger.setLevel(logging.INFO)
-handler = logging.StreamHandler()
-handler.setFormatter(
-    logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - " "%(pathname)s:%(lineno)d - %(message)s")
-)
-logger.addHandler(handler)
+# Import local modules
+from wecom_bot_mcp_server.logger import setup_logger
+
+from pydantic import BaseModel, Field
+
+# Constants
+LOGGER_NAME = "wecom_bot_mcp_server"
+
+# Initialize logger
+logger = setup_logger(LOGGER_NAME)
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Create FastMCP server
 mcp = FastMCP("WeCom Bot Server")
 
-# Message history storage
-message_history: list[dict[str, str]] = []
+# Initialize message history
+message_history: List[Dict[str, Any]] = []
 
 
-def fix_encoding(text: str) -> str:
-    """Fix text encoding issues"""
-    try:
-        # Try different encodings
-        encodings = ["utf-8", "gbk", "gb2312", "gb18030"]
-        for encoding in encodings:
-            try:
-                # First encode string to bytes, then decode
-                return text.encode(encoding, errors="ignore").decode(encoding)
-            except (UnicodeEncodeError, UnicodeDecodeError):
-                continue
-
-        # If above methods fail, try using codecs
-        return codecs.decode(codecs.encode(text, "utf-8", errors="ignore"), "utf-8")
-    except Exception as e:
-        logger.error(f"Error fixing encoding: {e!s}")
-        return text
-
-
-def encode_text(text: str) -> str:
-    """Encode text to ensure proper handling of Chinese characters"""
-    try:
-        # First fix encoding issues
-        fixed_text = fix_encoding(text)
-        logger.debug(f"Fixed text: {fixed_text}")
-
-        # Convert fixed text to JSON string
-        return json.dumps(fixed_text, ensure_ascii=False)
-    except Exception as e:
-        logger.error(f"Error encoding text: {e!s}")
-        return text
-
-
-def decode_text(text: str) -> str:
-    """Decode text from JSON format"""
-    try:
-        if text.startswith('"') and text.endswith('"'):
-            decoded = json.loads(text)
-            return fix_encoding(decoded)
-        return fix_encoding(text)
-    except Exception as e:
-        logger.error(f"Error decoding text: {e!s}")
-        return text
-
-
-async def _validate_input(content: str, ctx: Context | None = None) -> None:
-    """Validate input parameters for sending message.
-
-    Args:
-        content: Message content to validate
-        ctx: Optional FastMCP context for logging
-
-    Raises:
-        ValueError: If content is empty/whitespace or webhook URL is not set
-    """
-    if not content or content.isspace():
-        error_msg = "Message content cannot be empty or whitespace"
-        if ctx:
-            ctx.error(error_msg)
-        raise ValueError(error_msg)
-
-    webhook_url = os.getenv("WECOM_WEBHOOK_URL")
-    if not webhook_url:
-        error_msg = "WECOM_WEBHOOK_URL environment variable is not set"
-        if ctx:
-            ctx.error(error_msg)
-        raise ValueError(error_msg)
-
-
-async def _prepare_message(content: str) -> dict:
-    """Prepare message payload for WeChat API.
-
-    Args:
-        content: Message content to prepare
-
-    Returns:
-        dict: Prepared message payload
-    """
-    # Encode content to handle Chinese characters
-    encoded_content = encode_text(content)
-
-    # Create message payload
-    return {"msgtype": "markdown", "markdown": {"content": encoded_content}}
-
-
-async def _send_http_request(url: str, payload: dict, ctx: Context | None = None) -> dict:
-    """Send HTTP request to WeChat API.
-
-    Args:
-        url: Webhook URL
-        payload: Message payload
-        ctx: Optional FastMCP context for logging
-
-    Returns:
-        dict: API response data
-
-    Raises:
-        ValueError: If request fails or response is invalid
-    """
-    async with httpx.AsyncClient() as client:
-        try:
-            response = await client.post(url, json=payload)
-            logger.debug(f"Response status: {response.status_code}")
-            logger.debug(f"Response content: {response.text}")
-
-            if response.status_code != HTTPStatus.OK:
-                error_msg = f"Failed to send message: {response.text}"
-                if ctx:
-                    ctx.error(error_msg)
-                message_history.append({"role": "assistant", "error": error_msg})
-                raise ValueError(error_msg) from None
-
-            return response.json()
-
-        except httpx.TimeoutException as e:
-            error_msg = f"Request timeout: {e!s}"
-            if ctx:
-                ctx.error(error_msg)
-            message_history.append({"role": "assistant", "error": error_msg})
-            raise ValueError(error_msg) from e
-
-        except httpx.RequestError as e:
-            error_msg = f"HTTP request failed: {e!s}"
-            if ctx:
-                ctx.error(error_msg)
-            message_history.append({"role": "assistant", "error": error_msg})
-            raise ValueError(error_msg) from e
+class SendMessageParams(BaseModel):
+    """Parameters for send_message tool."""
+    content: Annotated[str, Field(
+        description="The message content to send to WeCom group/chat. "
+                   "Will be formatted as markdown."
+    )]
 
 
 @mcp.tool()
-async def send_message(content: str, ctx: Context | None = None) -> str:
+async def send_message(params: SendMessageParams) -> str:
     """Send a message to WeCom group/chat via webhook.
 
     This function sends a message to WeCom using the configured webhook URL.
     The message will be formatted as markdown and added to message history.
 
     Args:
-        content: The message content to send. Cannot be empty or whitespace.
-        ctx: Optional FastMCP context for logging and progress tracking.
+        params: The parameters for sending the message.
 
     Returns:
         str: Success message if the message was sent successfully.
@@ -191,48 +62,52 @@ async def send_message(content: str, ctx: Context | None = None) -> str:
         ValueError: If content is empty/whitespace, webhook URL is not set,
                    or if there's an error sending the message.
     """
-    try:
-        # Input validation
-        await _validate_input(content, ctx)
-        webhook_url = os.getenv("WECOM_WEBHOOK_URL")
+    logger.info("Received request to send message: %s", params.content)
 
-        # Progress tracking
-        if ctx:
-            ctx.info("Preparing to send message...")
+    # Validate input
+    webhook_url = os.getenv("WECOM_WEBHOOK_URL")
+    if not webhook_url:
+        error_msg = "WECOM_WEBHOOK_URL environment variable is not set"
+        logger.error(error_msg)
+        raise ValueError(error_msg)
 
-        # Prepare message
-        payload = await _prepare_message(content)
+    if not params.content or params.content.isspace():
+        error_msg = "Message content cannot be empty or whitespace"
+        logger.error(error_msg)
+        raise ValueError(error_msg)
 
-        # Send request
-        if ctx:
-            ctx.info("Sending message...")
-        response_data = await _send_http_request(webhook_url, payload, ctx)
+    # Prepare message payload
+    payload = {"msgtype": "markdown", "markdown": {"content": params.content}}
+    logger.debug("Message payload prepared: %s", payload)
 
-        # Check WeChat API response
+    # Send request
+    logger.info("Sending message to WeCom")
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        response = await client.post(webhook_url, json=payload)
+        logger.debug("Response status: %d, content: %s", response.status_code, response.text)
+
+        if response.status_code != HTTPStatus.OK:
+            error_msg = f"HTTP error {response.status_code}: {response.text}"
+            logger.error(error_msg)
+            raise ValueError(error_msg)
+
+        response_data = response.json()
         if response_data.get("errcode") != 0:
-            error_msg = f"WeChat API error: {response_data.get('errmsg', 'Unknown error')}"
-            if ctx:
-                ctx.error(error_msg)
-            message_history.append({"role": "assistant", "error": error_msg})
-            raise ValueError(error_msg) from None
+            error_msg = f"WeChat API error {response_data.get('errcode')}: {response_data.get('errmsg', 'Unknown error')}"
+            logger.error(error_msg)
+            raise ValueError(error_msg)
 
-        # Success - add to history
-        message_history.append({"role": "assistant", "content": content})
+    # Update message history
+    message_history.append({"role": "assistant", "content": params.content})
+    logger.debug("Message history updated, length: %d", len(message_history))
 
-        success_msg = "Message sent successfully"
-        if ctx:
-            ctx.info(success_msg)
-        return success_msg
-
-    except Exception as e:
-        error_msg = f"Unexpected error: {e!s}"
-        if ctx:
-            ctx.error(error_msg)
-        message_history.append({"role": "assistant", "error": error_msg})
-        raise ValueError(error_msg) from e
+    success_msg = "Message sent successfully"
+    logger.info(success_msg)
+    return success_msg
 
 
-@mcp.resource("config://message-history")
+
+@mcp.resource("resource://message-history")
 def get_message_history() -> str:
     """Get message history as a formatted string.
 
@@ -253,8 +128,11 @@ def main() -> None:
 
     This function starts the FastMCP server for handling WeCom bot messages.
     """
-    mcp.run()
-
+    try:
+        mcp.run()
+    except Exception as e:
+        logger.error("Failed to start server: %s", e, exc_info=True)
+        raise
 
 if __name__ == "__main__":
     main()
