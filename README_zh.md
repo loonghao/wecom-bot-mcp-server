@@ -20,6 +20,14 @@
 
 ## 安装
 
+### 使用 Smithery 安装
+
+通过 [Smithery](https://smithery.ai/server/wecom-bot-mcp-server) 为 Claude Desktop 自动安装 WeCom Bot Server：
+
+```bash
+npx -y @smithery/cli install wecom-bot-mcp-server --client claude
+```
+
 使用 pip 安装：
 
 ```bash
