@@ -14,6 +14,7 @@
 docs/_*
 docs/src/*
 target/*
+__pycache__/
 /venv/
 /run_pycharm.bat
 /.nox/
