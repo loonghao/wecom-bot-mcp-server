@@ -2,250 +2,200 @@
 
 This module provides a server implementation for WeCom bot that follows the Model Context Protocol (MCP).
 It handles message communication with WeCom webhook API and maintains message history.
-
-The server provides two main functionalities:
-1. Send messages to WeCom via webhook (Tool)
-2. Access message history (Resource)
-
-Example:
-    To start the server:
-
-    ```python
-    if __name__ == "__main__":
-        mcp.run()
-    ```
 """
 
 # Import built-in modules
-import codecs
-import json
 import logging
 import os
-from http import HTTPStatus
+import sys
+import traceback
+from datetime import datetime
+from typing import Annotated, Any, Callable, Dict, ParamSpec, TypeVar, cast
 
 import httpx
 
 # Import third-party modules
+from dotenv import load_dotenv
 from fastmcp import Context, FastMCP
+from mcp.shared.exceptions import McpError
+from pydantic import Field
+from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
 
-# Set up logging
-logger = logging.getLogger("mcp_wechat_server")
-logger.setLevel(logging.INFO)
-handler = logging.StreamHandler()
-handler.setFormatter(
-    logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - " "%(pathname)s:%(lineno)d - %(message)s")
+# Import local modules
+from wecom_bot_mcp_server.constants import (
+    INITIAL_WAIT_SECONDS,
+    LOGGER_NAME,
+    MAX_RETRIES,
+    MAX_WAIT_SECONDS,
+    REQUEST_TIMEOUT,
 )
-logger.addHandler(handler)
+from wecom_bot_mcp_server.logger import setup_logger
+from wecom_bot_mcp_server.models import Message, MessageHistory
 
-# Create FastMCP server
-mcp = FastMCP("WeCom Bot Server")
-
-# Message history storage
-message_history: list[dict[str, str]] = []
-
-
-def fix_encoding(text: str) -> str:
-    """Fix text encoding issues"""
-    try:
-        # Try different encodings
-        encodings = ["utf-8", "gbk", "gb2312", "gb18030"]
-        for encoding in encodings:
-            try:
-                # First encode string to bytes, then decode
-                return text.encode(encoding, errors="ignore").decode(encoding)
-            except (UnicodeEncodeError, UnicodeDecodeError):
-                continue
-
-        # If above methods fail, try using codecs
-        return codecs.decode(codecs.encode(text, "utf-8", errors="ignore"), "utf-8")
-    except Exception as e:
-        logger.error(f"Error fixing encoding: {e!s}")
-        return text
+# Type variables
+T = TypeVar("T")
+P = ParamSpec("P")
 
 
-def encode_text(text: str) -> str:
-    """Encode text to ensure proper handling of Chinese characters"""
-    try:
-        # First fix encoding issues
-        fixed_text = fix_encoding(text)
-        logger.debug(f"Fixed text: {fixed_text}")
+# Setup logging
+logger = setup_logger(LOGGER_NAME)
 
-        # Convert fixed text to JSON string
-        return json.dumps(fixed_text, ensure_ascii=False)
-    except Exception as e:
-        logger.error(f"Error encoding text: {e!s}")
-        return text
+# Set fastmcp and mcp loggers to WARNING level to suppress INFO messages
+for logger_name in ["fastmcp", "mcp"]:
+    module_logger = logging.getLogger(logger_name)
+    module_logger.setLevel(logging.WARNING)
+
+# Load environment variables
+load_dotenv()
 
 
-def decode_text(text: str) -> str:
-    """Decode text from JSON format"""
-    try:
-        if text.startswith('"') and text.endswith('"'):
-            decoded = json.loads(text)
-            return fix_encoding(decoded)
-        return fix_encoding(text)
-    except Exception as e:
-        logger.error(f"Error decoding text: {e!s}")
-        return text
+# Initialize FastMCP with settings
+mcp = FastMCP(
+    "WeCom Bot Server",
+)
 
 
-async def _validate_input(content: str, ctx: Context | None = None) -> None:
-    """Validate input parameters for sending message.
+# Store message history
+message_history: list[MessageHistory] = []
+
+
+def retry_decorator(func: Callable[P, T]) -> Callable[P, T]:
+    """Type-safe retry decorator wrapper."""
+    decorated = retry(
+        stop=stop_after_attempt(MAX_RETRIES),
+        wait=wait_exponential(multiplier=INITIAL_WAIT_SECONDS, max=MAX_WAIT_SECONDS),
+        retry=retry_if_exception_type((httpx.TimeoutException, httpx.HTTPError)),
+        before_sleep=lambda retry_state: logger.debug(
+            "Request failed (attempt %d/%d): %s",
+            retry_state.attempt_number,
+            MAX_RETRIES,
+            str(retry_state.outcome.exception()),
+        ),
+    )(func)
+    return cast(Callable[P, T], decorated)
+
+
+@retry_decorator
+async def _send_request(url: str, payload: Dict[str, Any]) -> Dict[str, Any]:
+    """Send HTTP request with retry logic.
 
     Args:
-        content: Message content to validate
-        ctx: Optional FastMCP context for logging
-
-    Raises:
-        ValueError: If content is empty/whitespace or webhook URL is not set
-    """
-    if not content or content.isspace():
-        error_msg = "Message content cannot be empty or whitespace"
-        if ctx:
-            ctx.error(error_msg)
-        raise ValueError(error_msg)
-
-    webhook_url = os.getenv("WECOM_WEBHOOK_URL")
-    if not webhook_url:
-        error_msg = "WECOM_WEBHOOK_URL environment variable is not set"
-        if ctx:
-            ctx.error(error_msg)
-        raise ValueError(error_msg)
-
-
-async def _prepare_message(content: str) -> dict:
-    """Prepare message payload for WeChat API.
-
-    Args:
-        content: Message content to prepare
+        url: The webhook URL to send request to
+        payload: The request payload
 
     Returns:
-        dict: Prepared message payload
-    """
-    # Encode content to handle Chinese characters
-    encoded_content = encode_text(content)
-
-    # Create message payload
-    return {"msgtype": "markdown", "markdown": {"content": encoded_content}}
-
-
-async def _send_http_request(url: str, payload: dict, ctx: Context | None = None) -> dict:
-    """Send HTTP request to WeChat API.
-
-    Args:
-        url: Webhook URL
-        payload: Message payload
-        ctx: Optional FastMCP context for logging
-
-    Returns:
-        dict: API response data
+        Dict[str, Any]: Response data from the API
 
     Raises:
-        ValueError: If request fails or response is invalid
+        ValueError: If the request fails after all retries
+        httpx.TimeoutException: If the request times out
+        httpx.HTTPError: If there's an HTTP error
     """
-    async with httpx.AsyncClient() as client:
-        try:
+    try:
+        async with httpx.AsyncClient(timeout=REQUEST_TIMEOUT) as client:
+            logger.debug("Sending request to %s with payload: %s", url, payload)
             response = await client.post(url, json=payload)
-            logger.debug(f"Response status: {response.status_code}")
-            logger.debug(f"Response content: {response.text}")
+            logger.debug(
+                "Response received - Status: %d, Content: %s",
+                response.status_code,
+                response.text,
+            )
 
-            if response.status_code != HTTPStatus.OK:
-                error_msg = f"Failed to send message: {response.text}"
-                if ctx:
-                    ctx.error(error_msg)
-                message_history.append({"role": "assistant", "error": error_msg})
-                raise ValueError(error_msg) from None
+            if response.status_code != 200:
+                error_msg = f"HTTP error {response.status_code}: {response.text}"
+                logger.warning(error_msg)
+                raise ValueError(error_msg)
 
-            return response.json()
+            response_data = cast(Dict[str, Any], response.json())
+            if response_data.get("errcode") != 0:
+                error_msg = (
+                    f"WeChat API error {response_data.get('errcode')}: "
+                    f"{response_data.get('errmsg', 'Unknown error')}"
+                )
+                logger.warning(error_msg)
+                raise ValueError(error_msg)
 
-        except httpx.TimeoutException as e:
-            error_msg = f"Request timeout: {e!s}"
-            if ctx:
-                ctx.error(error_msg)
-            message_history.append({"role": "assistant", "error": error_msg})
-            raise ValueError(error_msg) from e
+            logger.debug("Request successful")
+            return response_data
 
-        except httpx.RequestError as e:
-            error_msg = f"HTTP request failed: {e!s}"
-            if ctx:
-                ctx.error(error_msg)
-            message_history.append({"role": "assistant", "error": error_msg})
-            raise ValueError(error_msg) from e
+    except (httpx.TimeoutException, httpx.HTTPError) as e:
+        logger.debug("HTTP request failed: %s", str(e))
+        raise
+    except ValueError:
+        raise
+    except Exception as e:
+        logger.error("Unexpected error during request: %s", str(e))
+        raise
 
 
-@mcp.tool()
-async def send_message(content: str, ctx: Context | None = None) -> str:
-    """Send a message to WeCom group/chat via webhook.
+@mcp.tool(description="Send a message to WeCom group/chat via webhook")  # type: ignore
+async def send_message(
+    message: Annotated[Message, Field(description="Message to send")],
+    context: Annotated[Context, Field(description="MCP context object")],
+) -> str:
+    """Send a message to WeCom using the configured webhook URL.
 
     This function sends a message to WeCom using the configured webhook URL.
     The message will be formatted as markdown and added to message history.
 
     Args:
-        content: The message content to send. Cannot be empty or whitespace.
-        ctx: Optional FastMCP context for logging and progress tracking.
+        message: The message to send, containing content and message type
+        context: MCP context object (required by MCP framework but not used in this implementation)
 
     Returns:
-        str: Success message if the message was sent successfully.
-
-    Raises:
-        ValueError: If content is empty/whitespace, webhook URL is not set,
-                   or if there's an error sending the message.
+        str: Success message if the message was sent successfully,
+             or error message if there was an error.
     """
+    webhook_url = os.getenv("WECHAT_WEBHOOK_URL")
+    if not webhook_url:
+        error_msg = "WECHAT_WEBHOOK_URL environment variable is not set"
+        logger.error(error_msg)
+        return f"Error: {error_msg}"
+
+    # Construct payload with proper key
+    msgtype = message.msgtype
+    payload = {"msgtype": msgtype, msgtype: {"content": message.content}}
+
     try:
-        # Input validation
-        await _validate_input(content, ctx)
-        webhook_url = os.getenv("WECOM_WEBHOOK_URL")
-
-        # Progress tracking
-        if ctx:
-            ctx.info("Preparing to send message...")
-
-        # Prepare message
-        payload = await _prepare_message(content)
-
-        # Send request
-        if ctx:
-            ctx.info("Sending message...")
-        response_data = await _send_http_request(webhook_url, payload, ctx)
-
-        # Check WeChat API response
-        if response_data.get("errcode") != 0:
-            error_msg = f"WeChat API error: {response_data.get('errmsg', 'Unknown error')}"
-            if ctx:
-                ctx.error(error_msg)
-            message_history.append({"role": "assistant", "error": error_msg})
-            raise ValueError(error_msg) from None
-
-        # Success - add to history
-        message_history.append({"role": "assistant", "content": content})
-
+        await _send_request(webhook_url, payload)
         success_msg = "Message sent successfully"
-        if ctx:
-            ctx.info(success_msg)
+        logger.info(success_msg)
+
+        # Update message history with timestamp
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        message_history.append(
+            MessageHistory(role="assistant", content=message.content, status="sent", timestamp=timestamp)
+        )
+
         return success_msg
-
+    except ValueError as e:
+        error_msg = f"Failed to send message: {str(e)}"
+        logger.warning(error_msg)
+        return f"Error: {error_msg}"
     except Exception as e:
-        error_msg = f"Unexpected error: {e!s}"
-        if ctx:
-            ctx.error(error_msg)
-        message_history.append({"role": "assistant", "error": error_msg})
-        raise ValueError(error_msg) from e
+        error_msg = f"Unexpected error while sending message: {str(e)}"
+        logger.error(error_msg)
+        return f"Error: {error_msg}"
 
 
-@mcp.resource("config://message-history")
+@mcp.resource("resource://message-history", description="Get message history as a formatted string")  # type: ignore
 def get_message_history() -> str:
     """Get message history as a formatted string.
 
     This function returns the message history as a newline-separated string,
-    where each line contains the role and content of a message.
+    where each line contains the role, content, status and timestamp of a message.
 
     Returns:
         str: Formatted message history string. Empty string if no messages.
     """
-    return "\n".join(
-        f"{msg.get('role', 'unknown')}: {msg.get('content', '')} ({msg.get('status', 'unknown')})"
-        for msg in message_history
-    )
+    logger.debug("Retrieving message history - Length: %d", len(message_history))
+    if not message_history:
+        logger.info("Message history is empty")
+        return "No messages in history"
+
+    history = "\n".join(f"{msg.role}: {msg.content} ({msg.status}) at {msg.timestamp}" for msg in message_history)
+    logger.debug("Message history retrieved successfully")
+    return history
 
 
 def main() -> None:
@@ -253,7 +203,19 @@ def main() -> None:
 
     This function starts the FastMCP server for handling WeCom bot messages.
     """
-    mcp.run()
+    try:
+        logger.info("Starting WeCom Bot MCP Server...")
+        mcp.run()
+    except McpError as e:
+        logger.error("MCP error: %s", str(e), exc_info=True)
+        sys.exit(1)
+    except Exception as e:
+        logger.critical(
+            "Failed to start server: %s\n%s",
+            str(e),
+            traceback.format_exc(),
+        )
+        sys.exit(1)
 
 
 if __name__ == "__main__":

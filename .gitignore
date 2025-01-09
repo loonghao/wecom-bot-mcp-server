@@ -14,9 +14,16 @@
 docs/_*
 docs/src/*
 target/*
+__pycache__/
 /venv/
 /run_pycharm.bat
 /.nox/
 /build/
 /coverage.xml
 /.zip/
+/.windsurfrules
+/dist/
+/run-ide.bat
+/.venv/
+/.env
+/scratchpad.md

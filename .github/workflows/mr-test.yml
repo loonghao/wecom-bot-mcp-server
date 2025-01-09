@@ -6,33 +6,40 @@ jobs:
     strategy:
       max-parallel: 3
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        target:
+          - os: 'ubuntu-latest'
+            triple: 'x86_64-unknown-linux-gnu'
+          - os: 'macos-latest'
+            triple: 'x86_64-apple-darwin'
+          - os: 'windows-latest'
+            triple: 'x86_64-pc-windows-msvc'
         python-version: ["3.10", "3.11", "3.12"]
       fail-fast: false
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ matrix.target.os }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-          
-      - name: Install poetry
-        run: |
-          python -m pip install --upgrade pip
-          pip install poetry
-          
-      - name: Configure poetry
-        run: |
-          poetry config virtualenvs.create true
-          poetry config virtualenvs.in-project true
-          
       - name: Install dependencies
+        shell: bash
         run: |
-          python -m pip install -r requirements-dev.txt
-          poetry --version
+          python -m pip install uv
+          uv venv
+          if [ "${{ matrix.target.os }}" = "windows-latest" ]; then
+            source .venv/Scripts/activate
+          else
+            source .venv/bin/activate
+          fi
+          uv pip install -r requirements-dev.txt
       - name: lint
+        shell: bash
         run: |
+          if [ "${{ matrix.target.os }}" = "windows-latest" ]; then
+            source .venv/Scripts/activate
+          else
+            source .venv/bin/activate
+          fi
           nox -s lint
