@@ -1,9 +1,10 @@
 # WeCom Bot MCP Server
 
-[![Python Package](https://github.com/loonghao/wecom-bot-mcp-server/actions/workflows/python-package.yml/badge.svg)](https://github.com/loonghao/wecom-bot-mcp-server/actions/workflows/python-package.yml)
+[![Python Version](https://img.shields.io/pypi/pyversions/wecom-bot-mcp-server.svg)](https://pypi.org/project/wecom-bot-mcp-server/)
 [![codecov](https://codecov.io/gh/loonghao/wecom-bot-mcp-server/branch/main/graph/badge.svg)](https://codecov.io/gh/loonghao/wecom-bot-mcp-server)
 [![PyPI version](https://badge.fury.io/py/wecom-bot-mcp-server.svg)](https://badge.fury.io/py/wecom-bot-mcp-server)
 [![Python Version](https://img.shields.io/pypi/pyversions/wecom-bot-mcp-server.svg)](https://pypi.org/project/wecom-bot-mcp-server/)
+[![Downloads](https://pepy.tech/badge/wecom-bot-mcp-server)](https://pepy.tech/project/wecom-bot-mcp-server)
 [![smithery badge](https://smithery.ai/badge/wecom-bot-mcp-server)](https://smithery.ai/server/wecom-bot-mcp-server)
 
 A WeCom (WeChat Work) bot server implemented with FastMCP, supporting message sending via webhook.
