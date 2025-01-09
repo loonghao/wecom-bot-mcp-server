@@ -24,3 +24,4 @@ target/*
 /dist/
 /run-ide.bat
 /.venv/
+/.env
