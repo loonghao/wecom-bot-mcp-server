@@ -18,9 +18,3 @@ repos:
         args: [-s, ruff_check]
         language: system
         types: [python]
-      - id: isort check
-        name: isort check
-        entry: nox
-        args: [ -s, isort_check]
-        language: system
-        types: [python]

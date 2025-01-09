@@ -1,7 +1,9 @@
 """Tests for text utilities."""
 
+# Import third-party modules
 import pytest
 
+# Import local modules
 from wecom_bot_mcp_server.text_utils import decode_text, encode_text, fix_encoding
 
 

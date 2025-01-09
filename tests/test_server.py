@@ -2,16 +2,41 @@
 Tests for WeCom Bot MCP Server Implementation
 
 This module contains unit tests for the WeCom bot server implementation.
-It tests message sending functionality and message history management.
+It tests message sending functionality, retry mechanism, error handling, and notification processing.
 """
 
 # Import built-in modules
-from unittest.mock import MagicMock, patch
+import logging
+from http import HTTPStatus
+from unittest.mock import AsyncMock, MagicMock, patch
 
-# Import third-party modules
+import httpx
 import pytest
 
-from wecom_bot_mcp_server.server import get_message_history, message_history, send_message
+# Import third-party modules
+from fastmcp import Context  # type: ignore
+from pydantic import ValidationError
+from tenacity import RetryError
+
+# Import local modules
+from wecom_bot_mcp_server.models import Message, MessageHistory
+from wecom_bot_mcp_server.server import (
+    MAX_RETRIES,
+    _send_request,
+    get_message_history,
+    logger,
+    message_history,
+    send_message,
+)
+
+
+@pytest.fixture(autouse=True)
+def setup_logging():
+    """Set up logging configuration for tests."""
+    original_level = logger.level
+    logger.setLevel(logging.WARNING)
+    yield
+    logger.setLevel(original_level)
 
 
 @pytest.fixture(autouse=True)
@@ -36,80 +61,75 @@ def clear_message_history() -> None:
 
 @pytest.mark.asyncio
 async def test_send_message_success() -> None:
-    """Test successful message sending.
-
-    Tests that:
-    1. Message is sent successfully
-    2. Message is added to history
-    3. Correct response is returned
-    """
-    test_message = "Test message"
+    """Test successful message sending."""
+    test_message = Message(content="Test message", msgtype="markdown")
+    test_context = Context(session_id="test_session")
 
     # Mock successful response
     mock_response = MagicMock()
-    mock_response.status_code = 200
+    mock_response.status_code = HTTPStatus.OK
     mock_response.json.return_value = {"errcode": 0, "errmsg": "ok"}
 
-    async def mock_post(*args, **kwargs):
-        return mock_response
-
-    with patch("httpx.AsyncClient.post", new=mock_post):
-        result = await send_message(test_message)
-        assert result == "Message sent successfully"
+    with patch("httpx.AsyncClient.post", return_value=mock_response):
+        result = await send_message(test_message, test_context)
+        assert "Message sent successfully" in result
         assert len(message_history) == 1
-        assert message_history[0]["role"] == "assistant"
-        assert message_history[0]["content"] == test_message
+        assert message_history[0].content == test_message.content
 
 
 @pytest.mark.asyncio
 async def test_send_message_empty_content() -> None:
-    """Test sending empty message content.
-
-    Verifies that attempting to send empty content raises ValueError.
-    """
-    with pytest.raises(ValueError, match="Message content cannot be empty"):
-        await send_message("   ")
+    """Test sending empty message content."""
+    with pytest.raises(ValidationError):  # pydantic validation will raise ValidationError
+        Message(content="", msgtype="markdown")
 
 
 @pytest.mark.asyncio
 async def test_send_message_api_error() -> None:
-    """Test handling of API errors.
+    """Test handling of API errors."""
+    test_message = Message(content="Test message", msgtype="markdown")
+    test_context = Context(session_id="test_session")
 
-    Tests error handling for:
-    1. HTTP error response
-    2. WeChat API error response
-    """
-    test_message = "Test message"
-
-    # Mock error response
+    # Test API error response
     mock_response = MagicMock()
-    mock_response.status_code = 500
-    mock_response.text = "Internal Server Error"
+    mock_response.status_code = HTTPStatus.OK
+    mock_response.json.return_value = {"errcode": 1, "errmsg": "API Error"}
 
-    async def mock_post(*args, **kwargs):
-        return mock_response
+    with patch("httpx.AsyncClient.post", AsyncMock(return_value=mock_response)):
+        result = await send_message(test_message, test_context)
+        assert "Error: Failed to send message: WeChat API error 1: API Error" in result
 
-    with patch("httpx.AsyncClient.post", new=mock_post), pytest.raises(ValueError, match="Failed to send message"):
-        await send_message(test_message)
+
+@pytest.mark.asyncio
+async def test_retry_mechanism() -> None:
+    """Test retry mechanism for network failures."""
+    test_url = "https://mock.wecom.api/webhook"
+    test_payload = {"content": "test"}
+
+    # Test max retries exceeded
+    mock_post = AsyncMock(side_effect=httpx.TimeoutException("Timeout"))
+
+    with patch("httpx.AsyncClient.post", mock_post):
+        with pytest.raises(RetryError):
+            await _send_request(test_url, test_payload)
+
+    # Verify retry attempts
+    assert mock_post.call_count == MAX_RETRIES
 
 
 def test_get_message_history_empty() -> None:
     """Test getting empty message history."""
-    assert get_message_history() == ""
+    assert get_message_history() == "No messages in history"
 
 
 def test_get_message_history_with_messages() -> None:
-    """Test getting message history with messages.
-
-    Tests that:
-    1. Messages are correctly formatted
-    2. Multiple messages are separated by newlines
-    """
-    message_history.extend(
-        [{"role": "assistant", "content": "Message 1"}, {"role": "assistant", "content": "Message 2"}]
+    """Test getting message history with messages."""
+    test_message = MessageHistory(
+        role="user", content="Test message", status="sent", timestamp="2025-01-09T20:09:00+08:00"
     )
+    message_history.append(test_message)
 
     history = get_message_history()
-    assert "Message 1" in history
-    assert "Message 2" in history
-    assert history.count("\n") == 1  # One newline between two messages
+    assert "Test message" in history
+    assert "user" in history
+    assert "sent" in history

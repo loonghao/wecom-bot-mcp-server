@@ -4,6 +4,7 @@ This module provides utilities for handling Chinese text encoding and decoding,
 ensuring proper handling of Chinese characters in different scenarios.
 """
 
+# Import built-in modules
 import codecs
 import json
 import logging
@@ -28,16 +29,28 @@ def fix_encoding(text: str) -> str:
         return text
 
     try:
+        # First try to detect if the text is already properly encoded UTF-8
+        try:
+            text.encode("utf-8").decode("utf-8")
+            return text
+        except (UnicodeEncodeError, UnicodeDecodeError):
+            pass
+
+        # Try to decode as UTF-8 first
+        try:
+            return text.encode("latin1").decode("utf-8")
+        except (UnicodeEncodeError, UnicodeDecodeError):
+            pass
+
         # Try different Chinese encodings
         for encoding in CHINESE_ENCODINGS:
             try:
-                # First encode string to bytes, then decode
-                return text.encode(encoding, errors="ignore").decode(encoding)
+                return text.encode("latin1").decode(encoding)
             except (UnicodeEncodeError, UnicodeDecodeError):
                 continue
 
-        # If above methods fail, try using codecs
-        return codecs.decode(codecs.encode(text, "utf-8", errors="ignore"), "utf-8")
+        # If all else fails, try using codecs with error handling
+        return codecs.decode(codecs.encode(text, "utf-8", errors="replace"), "utf-8", errors="replace")
     except Exception as e:
         logger.error("Error fixing encoding: %s", e, exc_info=True)
         return text
@@ -93,7 +106,7 @@ def decode_text(text: str) -> str:
             decoded = json.loads(text)
             logger.debug("Decoded JSON text: %s", decoded)
             return fix_encoding(decoded)
-        
+
         # If not JSON, just fix encoding
         fixed = fix_encoding(text)
         logger.debug("Fixed non-JSON text encoding: %s", fixed)

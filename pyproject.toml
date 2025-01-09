@@ -13,10 +13,16 @@ dependencies = [
     "pydantic>=2.5.2",
     "uvicorn>=0.34.0",
     "tenacity>=8.2.3",
+    "concurrent-log-handler>=0.9.25",
 ]
 requires-python = ">=3.10"
 readme = "README.md"
 license = { text = "MIT" }
+[project.urls]
+Homepage = "https://github.com/loonghao/wecom-bot-mcp-server"
+Repository = "https://github.com/loonghao/wecom-bot-mcp-server.git"
+Issues = "https://github.com/loonghao/wecom-bot-mcp-server/issues"
+Changelog = "https://github.com/loonghao/wecom-bot-mcp-server/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
 test = [
@@ -38,57 +44,7 @@ dev = [
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
-[tool.pytest.ini_options]
-asyncio_mode = "auto"
-testpaths = ["tests"]
-python_files = ["test_*.py"]
-addopts = "--cov=wecom_bot_mcp_server --cov-report=term-missing"
 
-[tool.coverage.run]
-source = ["wecom_bot_mcp_server"]
-branch = true
-
-[tool.coverage.report]
-exclude_lines = [
-    "pragma: no cover",
-    "def __repr__",
-    "if __name__ == .__main__.:",
-    "raise NotImplementedError",
-    "if TYPE_CHECKING:",
-    "pass",
-]
-
-[tool.black]
-line-length = 120
-target-version = ["py310"]
-
-[tool.isort]
-profile = "black"
-line_length = 120
-multi_line_output = 3
-
-[tool.mypy]
-python_version = "3.10"
-warn_return_any = true
-warn_unused_configs = true
-disallow_untyped_defs = true
-disallow_incomplete_defs = true
-check_untyped_defs = true
-disallow_untyped_decorators = true
-no_implicit_optional = true
-warn_redundant_casts = true
-warn_unused_ignores = true
-warn_no_return = true
-warn_unreachable = true
-
-[tool.ruff]
-line-length = 120
-target-version = "py310"
-select = ["E", "F", "B", "I"]
-ignore = []
-
-[tool.ruff.per-file-ignores]
-"__init__.py" = ["F401"]
 
 [project.scripts]
 wecom-bot-mcp-server = "wecom_bot_mcp_server.server:main"
@@ -106,3 +62,110 @@ packages = ["src/wecom_bot_mcp_server"]
 
 [tool.hatch.metadata]
 allow-direct-references = true
+
+
+[tool.black]
+line-length = 120
+target-version = ['py310', 'py311', 'py312']
+include = '\.pyi?$'
+exclude = '''
+(
+  /(
+      \.eggs         # exclude a few common directories in the
+    | \.git          # root of the project
+    | \.hg
+    | \.mypy_cache
+    | \.tox
+    | \.nox
+    | \.venv
+    | _build
+    | buck-out
+    | build
+    | dist
+  )/
+)
+'''
+
+[tool.isort]
+profile = "black"
+atomic = true
+include_trailing_comma = true
+lines_after_imports = 2
+lines_between_types = 1
+use_parentheses = true
+src_paths = ["wecom_bot_mcp_server", "tests"]
+filter_files = true
+known_first_party = "wecom_bot_mcp_server"
+
+# Enforce import section headers.
+import_heading_future = "Import future modules"
+import_heading_stdlib = "Import built-in modules"
+import_heading_thirdparty = "Import third-party modules"
+import_heading_firstparty = "Import local modules"
+
+force_sort_within_sections = true
+force_single_line = true
+
+# All project unrelated unknown imports belong to third-party.
+default_section = "THIRDPARTY"
+skip_glob = []
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort
+    "C",  # flake8-comprehensions
+    "B",  # flake8-bugbear
+]
+ignore = ["E501", "PLR0913", "RUF001", "RUF002", "RUF003"]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]
+"noxfile.py" = ["E402", "I001"]
+"tests/*" = ["S101"]
+
+[tool.coverage.run]
+source = ["wecom_bot_mcp_server"]
+branch = true
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if __name__ == .__main__.:",
+    "raise NotImplementedError",
+    "if TYPE_CHECKING:",
+]
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+mypy_path = "src"
+packages = ["wecom_bot_mcp_server"]
+ignore_missing_imports = true
+namespace_packages = false
+explicit_package_bases = false
+
+[tool.pytest.ini_options]
+asyncio_mode = "strict"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = "-v --cov=wecom_bot_mcp_server --cov-report=term-missing"

@@ -26,3 +26,4 @@ __pycache__/
 /run-ide.bat
 /.venv/
 /.env
+/scratchpad.md
