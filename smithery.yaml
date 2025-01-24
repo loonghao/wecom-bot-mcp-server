@@ -1,0 +1,17 @@
+# Smithery configuration file: https://smithery.ai/docs/config#smitheryyaml
+
+startCommand:
+  type: stdio
+  configSchema:
+    # JSON Schema defining the configuration options for the MCP.
+    type: object
+    required:
+      - wecomWebhookUrl
+    properties:
+      wecomWebhookUrl:
+        type: string
+        description: The WeCom bot webhook URL.
+  commandFunction:
+    # A function that produces the CLI command to start the MCP on stdio.
+    |-
+    config => ({ command: 'poetry', args: ['run', 'wecom-bot-mcp-server'], env: { WECOM_WEBHOOK_URL: config.wecomWebhookUrl } })
