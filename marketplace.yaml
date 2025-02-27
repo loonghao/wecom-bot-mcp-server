@@ -1,0 +1,185 @@
+name: wecom-bot-mcp-server
+version: 0.1.0
+description: A WeCom (WeChat Work) bot server following the Model Context Protocol (MCP)
+
+author:
+  name: longhao
+  email: hal.long@outlook.com
+
+logo: wecom.png
+
+category: Communication
+tags:
+  - wecom
+  - wechat
+  - bot
+  - webhook
+  - enterprise
+
+repository: https://github.com/loonghao/wecom-bot-mcp-server
+
+license: MIT
+
+requirements:
+  python: "^3.10"
+  dependencies:
+    - fastmcp==0.4.1
+    - httpx==0.24.1
+    - pydantic==2.0.0
+    - platformdirs==3.0.0
+
+configuration:
+  env_vars:
+    - name: WECOM_WEBHOOK_URL
+      description: WeCom bot webhook URL
+      required: true
+    - name: MCP_LOG_LEVEL
+      description: Log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+      default: INFO
+    - name: MCP_LOG_FILE
+      description: Custom log file path
+      required: false
+
+features:
+  - Send text messages
+  - Send markdown messages
+  - Send image messages
+  - Send file messages
+  - Mention users by ID or mobile number
+  - Message history tracking
+  - Configurable logging
+
+documentation:
+  setup: |
+    1. Install the package:
+       ```bash
+       pip install wecom-bot-mcp-server
+       ```
+    2. Set WECOM_WEBHOOK_URL environment variable:
+       ```bash
+       export WECOM_WEBHOOK_URL="your-webhook-url"
+       ```
+    3. Start the MCP server:
+       ```python
+       from wecom_bot_mcp_server import mcp
+       mcp.run()
+       ```
+    
+  usage: |
+    Send messages through WeCom using various formats:
+    - Text messages
+    - Markdown messages
+    - Image messages (base64)
+    - File messages
+    
+    Example:
+    ```python
+    from wecom_bot_mcp_server import mcp
+    from pathlib import Path
+    import base64
+    
+    # Start the server
+    async def main():
+        # Send text message
+        try:
+            await mcp.send_message(
+                content="Hello, World!",
+                msg_type="text"
+            )
+        except Exception as e:
+            print(f"Failed to send message: {e}")
+        
+        # Send markdown with error handling
+        try:
+            await mcp.send_message(
+                content="## Title\n- Point 1\n- Point 2",
+                msg_type="markdown",
+                mentioned_list=["user1"]
+            )
+        except ValueError as e:
+            print(f"Invalid message format: {e}")
+        except Exception as e:
+            print(f"Unexpected error: {e}")
+
+    if __name__ == "__main__":
+        mcp.run(main())
+    ```
+
+  configuration: |
+    Required environment variables:
+    - WECOM_WEBHOOK_URL: Your WeCom webhook URL
+    
+    Optional configuration:
+    - MCP_LOG_LEVEL: Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+    - MCP_LOG_FILE: Custom log file path
+
+    Troubleshooting:
+    1. Connection Issues:
+       - Verify your webhook URL is correct and accessible
+       - Check your network connection
+       - Ensure your IP is whitelisted if required
+    
+    2. Message Sending Failures:
+       - Verify message format matches the type specified
+       - Check if mentioned users exist
+       - Ensure file paths are valid for file messages
+    
+    3. Common Error Codes:
+       - 40014: Invalid access token
+       - 45009: API calling limit reached
+       - 50001: Invalid content type
+
+examples:
+  - title: 发送天气信息
+    description: 查询天气并发送到企业微信
+    code: |
+      USER: "深圳今天天气怎么样？发送到企业微信"
+      ASSISTANT: "我会查询深圳天气并发送到企业微信"
+
+      await mcp.send_message(
+          content="深圳天气：\n- 温度：25°C\n- 天气：晴\n- 空气质量：优",
+          msg_type="markdown"
+      )
+
+  - title: 发送会议提醒
+    description: 发送会议提醒并@相关人员
+    code: |
+      USER: "帮我发送下午3点的项目评审会议提醒，提醒张三和李四参加"
+      ASSISTANT: "好的，我来发送会议提醒"
+
+      await mcp.send_message(
+          content="## 项目评审会议提醒\n\n时间：今天下午 3:00\n地点：会议室 A\n\n请准时参加！",
+          msg_type="markdown",
+          mentioned_list=["zhangsan", "lisi"]
+      )
+
+  - title: 发送文件
+    description: 发送文件到企业微信群
+    code: |
+      USER: "把这份周报发送到企业微信群"
+      ASSISTANT: "好的，我来发送周报"
+
+      await mcp.send_message(
+          content=Path("weekly_report.docx"),
+          msg_type="file"
+      )
+
+capabilities:
+  - name: send_message
+    description: Send messages to WeCom
+    parameters:
+      content:
+        type: Union[str, Dict[str, str], Path]
+        description: Message content (text, markdown, image base64, or file path)
+      msg_type:
+        type: str
+        description: Message type (text, markdown, image, file)
+        default: text
+      mentioned_list:
+        type: List[str]
+        description: List of user IDs to mention
+        optional: true
+      mentioned_mobile_list:
+        type: List[str]
+        description: List of mobile numbers to mention
+        optional: true

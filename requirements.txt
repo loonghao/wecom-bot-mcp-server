@@ -1,0 +1,4 @@
+fastmcp>=0.1.0
+httpx>=0.24.1
+notify-bridge>=0.1.0
+ftfy>=6.1.1

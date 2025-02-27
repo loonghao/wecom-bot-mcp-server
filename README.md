@@ -1,29 +1,44 @@
 # WeCom Bot MCP Server
 
-[![Python Package](https://github.com/loonghao/wecom-bot-mcp-server/actions/workflows/python-package.yml/badge.svg)](https://github.com/loonghao/wecom-bot-mcp-server/actions/workflows/python-package.yml)
-[![codecov](https://codecov.io/gh/loonghao/wecom-bot-mcp-server/branch/main/graph/badge.svg)](https://codecov.io/gh/loonghao/wecom-bot-mcp-server)
+<div align="center">
+    <img src="wecom.png" alt="WeCom Bot Logo" width="200"/>
+</div>
+
+A Model Context Protocol (MCP) compliant server implementation for WeCom (WeChat Work) bot.
+
 [![PyPI version](https://badge.fury.io/py/wecom-bot-mcp-server.svg)](https://badge.fury.io/py/wecom-bot-mcp-server)
 [![Python Version](https://img.shields.io/pypi/pyversions/wecom-bot-mcp-server.svg)](https://pypi.org/project/wecom-bot-mcp-server/)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![smithery badge](https://smithery.ai/badge/wecom-bot-mcp-server)](https://smithery.ai/server/wecom-bot-mcp-server)
 
-A WeCom (WeChat Work) bot server implemented with FastMCP, supporting message sending via webhook.
-
-[中文文档](README_zh.md) | English
-
-## Features
-
-- Built on FastMCP framework
-- Markdown message format support
-- Asynchronous message sending
-- Message history tracking
-- Complete type hints
-- Comprehensive unit tests
+[English](README.md) | [中文](README_zh.md)
 
 <a href="https://glama.ai/mcp/servers/amr2j23lbk"><img width="380" height="200" src="https://glama.ai/mcp/servers/amr2j23lbk/badge" alt="WeCom Bot Server MCP server" /></a>
 
-## Installation
 
-### Installing via Smithery
+## Features
+
+- Support for multiple message types:
+  - Text messages
+  - Markdown messages
+  - Image messages (base64)
+  - File messages
+- @mention support (via user ID or phone number)
+- Message history tracking
+- Configurable logging system
+- Full type annotations
+- Pydantic-based data validation
+
+## Quick Start
+
+### Requirements
+
+- Python 3.10+
+- WeCom Bot Webhook URL
+
+### Installation
+
+There are several ways to install the WeCom Bot MCP Server:
 
 To install WeCom Bot Server for Claude Desktop automatically via [Smithery](https://smithery.ai/server/wecom-bot-mcp-server):
 
@@ -31,299 +46,120 @@ To install WeCom Bot Server for Claude Desktop automatically via [Smithery](http
 npx -y @smithery/cli install wecom-bot-mcp-server --client claude
 ```
 
-Using pip:
+2. Using VSCode with [Cline Extension](https://marketplace.visualstudio.com/items?itemName=saoudrizwan.claude-dev):
 
-```bash
-pip install wecom-bot-mcp-server
-```
+- Install Cline extension from VSCode marketplace
+- Open Command Palette (Ctrl+Shift+P / Cmd+Shift+P)
+- Search for "Cline: Install Package"
+- Type "wecom-bot-mcp-server" and press Enter
 
-Or using poetry (recommended):
+### Configuration
 
-```bash
-poetry add wecom-bot-mcp-server
-```
-
-## Usage
-
-1. Set environment variable:
-
+1. Set required environment variables:
 ```bash
 # Windows PowerShell
-$env:WECOM_WEBHOOK_URL="your WeCom bot webhook URL"
+$env:WECOM_WEBHOOK_URL = "your-webhook-url"
 
-# Linux/macOS
-export WECOM_WEBHOOK_URL="your WeCom bot webhook URL"
+# Optional configurations
+$env:MCP_LOG_LEVEL = "DEBUG"  # Log levels: DEBUG, INFO, WARNING, ERROR, CRITICAL
 ```
 
-2. Run the server:
+2. Logging configuration:
+- Default log location: `mcp_wecom.log` in system log directory
+- Custom log location can be set via `MCP_LOG_FILE` environment variable
 
-```bash
-# Run directly after installation
-wecom-bot-mcp-server
-```
+### Usage Examples
 
-Or use in code:
+Using in MCP environment:
 
 ```python
-from wecom_bot_mcp_server.server import main
+# Scenario 1: Send weather information to WeCom
+USER: "How's the weather in Shenzhen today? Send it to WeCom"
+ASSISTANT: "I'll check Shenzhen's weather and send it to WeCom"
 
-# Start server
-if __name__ == "__main__":
-    main()
-```
+await mcp.send_message(
+    content="Shenzhen Weather:\n- Temperature: 25°C\n- Weather: Sunny\n- Air Quality: Good",
+    msg_type="markdown"
+)
 
-3. Send messages:
+# Scenario 2: Send meeting reminder and @mention relevant people
+USER: "Send a reminder for the 3 PM project review meeting, remind Zhang San and Li Si to attend"
+ASSISTANT: "I'll send the meeting reminder"
 
-```python
-from wecom_bot_mcp_server.server import send_message, get_message_history
+await mcp.send_message(
+    content="## Project Review Meeting Reminder\n\nTime: Today 3:00 PM\nLocation: Meeting Room A\n\nPlease be on time!",
+    msg_type="markdown",
+    mentioned_list=["zhangsan", "lisi"]
+)
 
-# Send a message
-await send_message("Hello, WeCom!")
+# Scenario 3: Send a file
+USER: "Send this weekly report to the WeCom group"
+ASSISTANT: "I'll send the weekly report"
 
-# Get message history
-history = get_message_history()
-```
-
-## Cline Configuration
-
-1. Install dependency:
-
-```bash
-poetry add wecom-bot-mcp-server
-```
-
-2. Configure Cline MCP settings:
-
-Configure the Cline MCP settings file in VSCode. File location:
-- Windows: `%APPDATA%\Code\User\globalStorage\rooveterinaryinc.roo-cline\settings\cline_mcp_settings.json`
-- Linux: `~/.config/Code/User/globalStorage\rooveterinaryinc.roo-cline\settings\cline_mcp_settings.json`
-- macOS: `~/Library/Application Support/Code/User/globalStorage\rooveterinaryinc.roo-cline\settings\cline_mcp_settings.json`
-
-Add the following configuration:
-
-```json
-{
-  "mcpServers": {
-    "wecom-bot-server": {
-      "command": "wecom-bot-mcp-server",
-      "args": [],
-      "env": {
-        "WECOM_WEBHOOK_URL": "<your WeCom bot webhook URL>"
-      },
-      "alwaysAllow": [
-        "send_message"
-      ],
-      "disabled": false
-    }
-  }
-}
-```
-
-Configuration notes:
-- `command`: Uses the installed command-line tool
-- `env.WECOM_WEBHOOK_URL`: Replace with your actual WeCom bot webhook URL
+await mcp.send_message(
+    content=Path("weekly_report.docx"),
+    msg_type="file"
+)
 
 ## Development
 
-1. Clone repository:
+### Prerequisites
 
+- Python 3.10+
+- uv (Python package installer)
+
+### Setup Development Environment
+
+1. Clone the repository:
 ```bash
 git clone https://github.com/loonghao/wecom-bot-mcp-server.git
 cd wecom-bot-mcp-server
 ```
 
-2. Install poetry and dependencies:
-
+2. Install dependencies using uv:
 ```bash
-pip install poetry
-poetry install --with dev
+uv venv
+uv pip install -e ".[dev]"
 ```
 
 3. Run tests:
-
 ```bash
-poetry run pytest tests/ --cov=wecom_bot_mcp_server
+uvx nox -s test
 ```
 
-4. Code checks:
-
+4. Run linting:
 ```bash
-poetry run ruff check .
-poetry run ruff format .
-poetry run mypy src/wecom_bot_mcp_server --strict
+uvx nox -s lint
 ```
 
-## Requirements
+## Project Structure
 
-- Python >= 3.10
-- FastMCP >= 0.4.1
-- httpx >= 0.24.1
+```
+wecom-bot-mcp-server/
+├── src/
+│   └── wecom_bot_mcp_server/
+│       ├── __init__.py
+│       └── server.py
+├── tests/
+│   └── test_server.py
+├── docs/
+├── pyproject.toml
+└── README.md
+```
+
+## Log Management
+
+The logging system uses `platformdirs` for cross-platform log file management:
+
+- Windows: `C:\Users\<username>\AppData\Local\hal\wecom-bot-mcp-server\logs`
+- Linux: `~/.local/share/wecom-bot-mcp-server/logs`
+- macOS: `~/Library/Application Support/wecom-bot-mcp-server/logs`
 
 ## License
 
-[MIT License](LICENSE)
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## Contributing
+## Contact
 
-Issues and Pull Requests are welcome!
-
----
-
-# WeCom Bot MCP Server (中文)
-
-[English](#wecom-bot-mcp-server) | 中文
-
-## 特性
-
-- 基于 FastMCP 框架实现
-- 支持 Markdown 格式消息
-- 异步消息发送
-- 消息历史记录
-- 完整的类型提示
-- 全面的单元测试
-
-## 安装
-
-### 使用 Smithery 安装
-
-通过 [Smithery](https://smithery.ai/server/wecom-bot-mcp-server) 为 Claude Desktop 自动安装 WeCom Bot Server：
-
-```bash
-npx -y @smithery/cli install wecom-bot-mcp-server --client claude
-```
-
-使用 pip 安装：
-
-```bash
-pip install wecom-bot-mcp-server
-```
-
-或者使用 poetry 安装（推荐）：
-
-```bash
-poetry add wecom-bot-mcp-server
-```
-
-## 使用方法
-
-1. 设置环境变量：
-
-```bash
-# Windows PowerShell
-$env:WECOM_WEBHOOK_URL="你的企业微信机器人 Webhook URL"
-
-# Linux/macOS
-export WECOM_WEBHOOK_URL="你的企业微信机器人 Webhook URL"
-```
-
-2. 运行服务器：
-
-```bash
-# 安装后可以直接运行命令
-wecom-bot-mcp-server
-```
-
-或者在代码中使用：
-
-```python
-from wecom_bot_mcp_server.server import main
-
-# 启动服务器
-if __name__ == "__main__":
-    main()
-```
-
-3. 发送消息：
-
-```python
-from wecom_bot_mcp_server.server import send_message, get_message_history
-
-# 发送消息
-await send_message("Hello, WeCom!")
-
-# 获取消息历史
-history = get_message_history()
-```
-
-## 在 Cline 中配置
-
-1. 安装依赖：
-
-```bash
-poetry add wecom-bot-mcp-server
-```
-
-2. 配置 Cline MCP 设置：
-
-在 VSCode 中，需要配置 Cline MCP 设置文件。文件位置：
-- Windows: `%APPDATA%\Code\User\globalStorage\rooveterinaryinc.roo-cline\settings\cline_mcp_settings.json`
-- Linux: `~/.config/Code/User/globalStorage\rooveterinaryinc.roo-cline\settings\cline_mcp_settings.json`
-- macOS: `~/Library/Application Support/Code/User/globalStorage\rooveterinaryinc.roo-cline\settings\cline_mcp_settings.json`
-
-添加以下配置：
-
-```json
-{
-  "mcpServers": {
-    "wecom-bot-server": {
-      "command": "wecom-bot-mcp-server",
-      "args": [],
-      "env": {
-        "WECOM_WEBHOOK_URL": "<你的企业微信机器人Webhook URL>"
-      },
-      "alwaysAllow": [
-        "send_message"
-      ],
-      "disabled": false
-    }
-  }
-}
-```
-
-配置说明：
-- `command`: 使用安装后的命令行工具
-- `env.WECOM_WEBHOOK_URL`: 替换为你的企业微信机器人实际的 Webhook URL
-
-## 开发
-
-1. 克隆仓库：
-
-```bash
-git clone https://github.com/loonghao/wecom-bot-mcp-server.git
-cd wecom-bot-mcp-server
-```
-
-2. 安装 poetry 和依赖：
-
-```bash
-pip install poetry
-poetry install --with dev
-```
-
-3. 运行测试：
-
-```bash
-poetry run pytest tests/ --cov=wecom_bot_mcp_server
-```
-
-4. 代码检查：
-
-```bash
-poetry run ruff check .
-poetry run ruff format .
-poetry run mypy src/wecom_bot_mcp_server --strict
-```
-
-## 要求
-
-- Python >= 3.10
-- FastMCP >= 0.4.1
-- httpx >= 0.24.1
-
-## 许可证
-
-[MIT License](LICENSE)
-
-## 贡献
-
-欢迎提交 Issue 和 Pull Request！
+- Author: longhao
+- Email: hal.long@outlook.com
