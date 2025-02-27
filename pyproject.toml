@@ -27,7 +27,7 @@ pillow = "^10.2.0"
 svglib = "^1.5.1"
 
 [tool.poetry.group.dev.dependencies]
-pytest = "^7.4.3"
+pytest = "^8.0.0"
 pytest-cov = "^4.1.0"
 pytest-asyncio = "^0.23.2"
 ruff = "^0.1.8"
