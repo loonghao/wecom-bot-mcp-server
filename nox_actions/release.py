@@ -1,3 +1,8 @@
+"""Release actions for WeCom Bot MCP Server.
+
+This module contains Nox sessions for building and releasing the package.
+"""
+
 # Import built-in modules
 import argparse
 import os
@@ -7,11 +12,19 @@ import zipfile
 # Import third-party modules
 import nox
 
-from nox_actions.utils import PACKAGE_NAME, THIS_ROOT
+# Import local modules
+from nox_actions.utils import PACKAGE_NAME
+from nox_actions.utils import THIS_ROOT
 
 
 @nox.session(name="build-exe", reuse_venv=True)
 def build_exe(session: nox.Session) -> None:
+    """Build executable version of the package.
+
+    Args:
+        session: Nox session object
+
+    """
     parser = argparse.ArgumentParser(prog="nox -s build-exe --release")
     parser.add_argument("--release", action="store_true")
     parser.add_argument("--version", default="0.5.0", help="Version to use for the zip file")

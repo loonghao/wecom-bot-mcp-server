@@ -1,7 +1,11 @@
+"""Nox configuration file for WeCom Bot MCP Server.
+
+This module configures Nox sessions for development tasks like testing, linting, and building.
+"""
+
 # Import built-in modules
 import os
 import sys
-
 
 ROOT = os.path.dirname(__file__)
 
@@ -12,8 +16,9 @@ if ROOT not in sys.path:
 # Import third-party modules
 import nox
 
-from nox_actions import codetest, lint
-
+# Import local modules
+from nox_actions import codetest
+from nox_actions import lint
 
 # Register nox sessions
 nox.session(lint.lint, name="lint")

@@ -1,3 +1,8 @@
+"""Utility functions for WeCom Bot MCP Server Nox actions.
+
+This module contains utility functions used by various Nox sessions.
+"""
+
 # Import built-in modules
 from pathlib import Path
 
@@ -14,5 +19,6 @@ def _assemble_env_paths(*paths):
 
     Returns:
         str: Assembled paths separated by a semicolon.
+
     """
     return ";".join(paths)

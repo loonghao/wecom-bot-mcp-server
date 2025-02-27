@@ -11,6 +11,7 @@
 .coverage
 
 # Documentation build folders.
+dist/
 docs/_*
 docs/src/*
 target/*
@@ -20,3 +21,6 @@ target/*
 /build/
 /coverage.xml
 /.zip/
+/run-ide.bat
+__pycache__/
+*.egg-info/

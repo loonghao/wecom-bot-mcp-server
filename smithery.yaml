@@ -1,17 +1,114 @@
 # Smithery configuration file: https://smithery.ai/docs/config#smitheryyaml
 
+name: wecom-bot-mcp-server
+displayName: WeCom Bot MCP Server
+description: A Python server for WeCom (WeChat Work) bot following the Model Context Protocol (MCP)
+version: 0.1.0
+author: longhao <hal.long@outlook.com>
+license: MIT
+repository: https://github.com/loonghao/wecom-bot-mcp-server
+
+icon: wecom.png
+category: Communication
+
 startCommand:
   type: stdio
   configSchema:
-    # JSON Schema defining the configuration options for the MCP.
     type: object
     required:
       - wecomWebhookUrl
     properties:
       wecomWebhookUrl:
         type: string
-        description: The WeCom bot webhook URL.
+        description: The WeCom bot webhook URL for sending messages
+      logLevel:
+        type: string
+        enum: [DEBUG, INFO, WARNING, ERROR, CRITICAL]
+        default: INFO
+        description: Log level for the server
+      logFile:
+        type: string
+        description: Custom log file path (optional)
+
   commandFunction:
     # A function that produces the CLI command to start the MCP on stdio.
     |-
-    config => ({ command: 'poetry', args: ['run', 'wecom-bot-mcp-server'], env: { WECOM_WEBHOOK_URL: config.wecomWebhookUrl } })
+    config => ({
+      command: 'wecom-bot-mcp-server',
+      env: {
+        WECOM_WEBHOOK_URL: config.wecomWebhookUrl,
+        MCP_LOG_LEVEL: config.logLevel,
+        MCP_LOG_FILE: config.logFile
+      }
+    })
+
+installation:
+  type: pip
+  package: wecom-bot-mcp-server
+  requirements:
+    - fastmcp>=0.4.1
+    - httpx>=0.24.1
+    - pydantic>=2.0.0
+    - platformdirs>=3.0.0
+
+capabilities:
+  - send_message:
+      description: Send messages to WeCom
+      alwaysAllow: true
+  - send_markdown:
+      description: Send markdown formatted messages
+      alwaysAllow: true
+  - send_image:
+      description: Send image messages (base64)
+      alwaysAllow: true
+  - send_file:
+      description: Send file messages
+      alwaysAllow: true
+  - mention_users:
+      description: Mention users in messages
+      alwaysAllow: true
+
+documentation:
+  usage: |
+    Send messages to WeCom using various formats:
+    - Text messages
+    - Markdown messages
+    - Image messages (base64)
+    - File messages
+    
+    Examples:
+    ```python
+    # Send text message
+    await mcp.send_message(
+        content="Hello, World!",
+        msg_type="text",
+        mentioned_list=["user1", "user2"]
+    )
+
+    # Send markdown message
+    await mcp.send_message(
+        content="## Meeting Reminder\n\nTime: 3:00 PM\nLocation: Room A",
+        msg_type="markdown"
+    )
+
+    # Send image
+    with open("image.png", "rb") as f:
+        base64_content = base64.b64encode(f.read()).decode()
+    await mcp.send_message(
+        content=base64_content,
+        msg_type="image"
+    )
+
+    # Send file
+    await mcp.send_message(
+        content=Path("document.pdf"),
+        msg_type="file"
+    )
+    ```
+
+compatibility:
+  os:
+    - windows
+    - linux
+    - macos
+  python: "^3.10"
