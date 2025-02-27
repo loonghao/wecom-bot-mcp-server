@@ -33,7 +33,7 @@ pytest-asyncio = "^0.23.2"
 ruff = "^0.1.8"
 mypy = "^1.7.1"
 nox = "^2023.4.22"
-commitizen = "^3.13.0"
+commitizen = "^4.0.0"
 
 [tool.poetry.scripts]
 wecom-bot-mcp-server = "wecom_bot_mcp_server.server:main"
