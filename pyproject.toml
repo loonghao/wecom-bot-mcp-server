@@ -23,7 +23,7 @@ platformdirs = "^4.2.0"
 pydantic = "^2.6.1"
 ftfy = "^6.3.1"
 httpx = "^0.28.1"
-pillow = "^10.2.0"
+pillow = "^11.0.0"
 svglib = "^1.5.1"
 
 [tool.poetry.group.dev.dependencies]
