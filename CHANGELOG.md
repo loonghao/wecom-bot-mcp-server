@@ -1,3 +1,9 @@
+## v0.2.0 (2025-02-27)
+
+### Feat
+
+- **wecom_bot_mcp_server**: Add text utilities for handling Chinese characters
+
 ## v0.1.0 (2025-01-02)
 
 ### Feat
