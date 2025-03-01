@@ -128,3 +128,18 @@ def build_exe(session):
                             os.path.relpath(os.path.join(root, file), os.path.join(platform_dir, ".")),
                         )
             print(f"Saving to {zip_file}")
+
+
+@nox.session
+def build(session):
+    """Build the package."""
+    session.install("uv")
+    session.run("uv", "build")
+
+
+@nox.session
+def publish(session):
+    """Build and publish the package to PyPI."""
+    session.install("uv", "twine")
+    session.run("uv", "build")
+    session.run("twine", "upload", "dist/*")
