@@ -1,5 +1,7 @@
 # Byte-compiled / optimized / DLL files
 *.py[cod]
+*$py.class
+*.so
 
 # PyCharm project files
 .idea/
@@ -9,18 +11,60 @@
 
 # Coverage output
 .coverage
+coverage.xml
 
 # Documentation build folders.
-dist/
 docs/_*
 docs/src/*
+docs/_build/
+docs/build/
 target/*
-/venv/
+dist/
+build/
+
+# Virtual Environment
+venv/
+env/
+ENV/
+.env
+.venv
+.uv/
+
+# IDE
+.vscode/
+*.swp
+*.swo
+.project
+.pydevproject
+.settings/
+
+# Testing
+.tox/
+.nox/
+.pytest_cache/
+
+# Logs
+*.log
+logs/
+
+# Cache
+.cache/
+.mypy_cache/
+__pycache__/
+.ruff_cache/
+
+# Distribution
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Other
 /run_pycharm.bat
 /.nox/
 /build/
 /coverage.xml
 /.zip/
 /run-ide.bat
-__pycache__/
-*.egg-info/
+
+# Hatch
+.hatch/

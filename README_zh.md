@@ -8,9 +8,12 @@
 
 [![PyPI version](https://badge.fury.io/py/wecom-bot-mcp-server.svg)](https://badge.fury.io/py/wecom-bot-mcp-server)
 [![Python Version](https://img.shields.io/pypi/pyversions/wecom-bot-mcp-server.svg)](https://pypi.org/project/wecom-bot-mcp-server/)
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
+[![smithery badge](https://smithery.ai/badge/wecom-bot-mcp-server)](https://smithery.ai/server/wecom-bot-mcp-server)
 
 [English](README.md) | [中文](README_zh.md)
+
+<a href="https://glama.ai/mcp/servers/amr2j23lbk"><img width="380" height="200" src="https://glama.ai/mcp/servers/amr2j23lbk/badge" alt="WeCom Bot Server MCP server" /></a>
 
 ## 功能特点
 
@@ -25,63 +28,89 @@
 - 完全类型注解
 - 基于 Pydantic 的数据验证
 
-## 快速开始
-
-### 环境要求
+## 环境要求
 
 - Python 3.10+
-- 企业微信机器人 Webhook URL
+- 企业微信机器人 Webhook URL（从企业微信群组设置中获取）
 
 ## 安装
 
 有以下几种方式安装 WeCom Bot MCP Server：
 
-1. 通过 [Smithery](https://smithery.ai/server/wecom-bot-mcp-server) 安装（推荐）：
+### 1. 自动安装（推荐）
+
+#### 使用 Smithery（适用于 Claude Desktop）：
 
 ```bash
 npx -y @smithery/cli install wecom-bot-mcp-server --client claude
 ```
 
-2. 使用 VSCode 的 [Cline 插件](https://marketplace.visualstudio.com/items?itemName=saoudrizwan.claude-dev)：
+#### 使用 VSCode 的 Cline 插件：
 
-- 从 VSCode marketplace 安装 Cline 插件
-- 打开命令面板（Ctrl+Shift+P / Cmd+Shift+P）
-- 搜索 "Cline: Install Package"
-- 输入 "wecom-bot-mcp-server" 并按回车
+1. 从 VSCode marketplace 安装 [Cline 插件](https://marketplace.visualstudio.com/items?itemName=saoudrizwan.claude-dev)
+2. 打开命令面板（Ctrl+Shift+P / Cmd+Shift+P）
+3. 搜索 "Cline: Install Package"
+4. 输入 "wecom-bot-mcp-server" 并按回车
 
-3. 手动配置：
+### 2. 手动安装
+
+#### 从 PyPI 安装：
+
+```bash
+pip install wecom-bot-mcp-server
+```
+
+#### 手动配置 MCP：
+
+创建或更新 MCP 配置文件：
+
 ```json
-// ~/.codeium/windsurf/mcp_config.json
+// Windsurf 配置: ~/.windsurf/config.json
 {
-  "mcp_servers": {
+  "mcpServers": {
     "wecom": {
-      "type": "wecom-bot-server",
-      "config": {
-        "webhook_url": "your-webhook-url"
+      "command": "uvx",
+      "args": [
+        "wecom-bot-mcp-server"
+      ],
+      "env": {
+        "WECOM_WEBHOOK_URL": "your-webhook-url"
       }
     }
   }
 }
 ```
 
-### 配置
+## 配置
 
-1. 设置必需的环境变量：
+### 设置环境变量
+
 ```bash
 # Windows PowerShell
 $env:WECOM_WEBHOOK_URL = "your-webhook-url"
 
 # 可选配置
 $env:MCP_LOG_LEVEL = "DEBUG"  # 日志级别：DEBUG, INFO, WARNING, ERROR, CRITICAL
+$env:MCP_LOG_FILE = "path/to/custom/log/file.log"  # 自定义日志文件路径
 ```
 
-2. 日志配置：
-- 默认日志位置：系统日志目录下的 `mcp_wecom.log`
-- 可通过 `MCP_LOG_FILE` 环境变量自定义日志位置
+### 日志管理
 
-### 使用示例
+日志系统使用 `platformdirs` 进行跨平台日志文件管理：
 
-在 MCP 环境中使用：
+- Windows: `C:\Users\<username>\AppData\Local\hal\wecom-bot-mcp-server\logs`
+- Linux: `~/.local/share/wecom-bot-mcp-server/logs`
+- macOS: `~/Library/Application Support/wecom-bot-mcp-server/logs`
+
+## 使用
+
+### 启动服务器
+
+```bash
+wecom-bot-mcp-server
+```
+
+### 使用示例（在 MCP 环境中）
 
 ```python
 # 场景一：发送天气信息到企业微信
@@ -111,13 +140,51 @@ await mcp.send_message(
     content=Path("weekly_report.docx"),
     msg_type="file"
 )
+```
 
-## 开发指南
+### 直接 API 使用
 
-### 环境准备
+#### 发送消息
 
-- Python 3.10+
-- uv（Python 包管理工具）
+```python
+from wecom_bot_mcp_server import mcp
+
+# 发送 markdown 消息
+await mcp.send_message(
+    content="**Hello World!**", 
+    msg_type="markdown"
+)
+
+# 发送文本消息并提及用户
+await mcp.send_message(
+    content="Hello @user1 @user2",
+    msg_type="text",
+    mentioned_list=["user1", "user2"]
+)
+```
+
+#### 发送文件
+
+```python
+from wecom_bot_mcp_server import send_wecom_file
+
+# 发送文件
+await send_wecom_file("/path/to/file.txt")
+```
+
+#### 发送图片
+
+```python
+from wecom_bot_mcp_server import send_wecom_image
+
+# 发送本地图片
+await send_wecom_image("/path/to/image.png")
+
+# 发送 URL 图片
+await send_wecom_image("https://example.com/image.png")
+```
+
+## 开发
 
 ### 开发环境设置
 
@@ -127,29 +194,62 @@ git clone https://github.com/loonghao/wecom-bot-mcp-server.git
 cd wecom-bot-mcp-server
 ```
 
-2. 使用 uv 安装依赖：
+2. 创建虚拟环境并安装依赖：
 ```bash
+# 使用 uv (推荐)
+pip install uv
 uv venv
 uv pip install -e ".[dev]"
+
+# 或者使用传统方式
+python -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
+pip install -e ".[dev]"
 ```
 
-3. 运行测试：
+### 测试
+
 ```bash
-uvx nox -s test
+# 使用 uv (推荐)
+uvx nox -s pytest
+
+# 或者使用传统方式
+nox -s pytest
 ```
 
-4. 运行代码检查：
+### 代码风格
+
 ```bash
+# 检查代码
 uvx nox -s lint
+
+# 自动修复代码风格问题
+uvx nox -s lint_fix
 ```
 
-## 日志管理
+## 项目结构
 
-日志系统使用 `platformdirs` 进行跨平台日志文件管理：
-
-- Windows: `C:\Users\<username>\AppData\Local\hal\wecom-bot-mcp-server\logs`
-- Linux: `~/.local/share/wecom-bot-mcp-server/logs`
-- macOS: `~/Library/Application Support/wecom-bot-mcp-server/logs`
+```
+wecom-bot-mcp-server/
+├── src/
+│   └── wecom_bot_mcp_server/
+│       ├── __init__.py
+│       ├── server.py
+│       ├── message.py
+│       ├── file.py
+│       ├── image.py
+│       ├── utils.py
+│       └── errors.py
+├── tests/
+│   ├── test_server.py
+│   ├── test_message.py
+│   ├── test_file.py
+│   └── test_image.py
+├── docs/
+├── pyproject.toml
+├── noxfile.py
+└── README.md
+```
 
 ## 许可证
 
