@@ -1,3 +1,9 @@
+## v0.4.0 (2025-03-01)
+
+### Feat
+
+- Add build and publish instructions
+
 ## v0.3.0 (2025-03-01)
 
 ### Feat
