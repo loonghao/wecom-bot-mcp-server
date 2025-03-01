@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "wecom-bot-mcp-server"
-version = "0.2.0"
+version = "0.3.0"
 description = "WeCom Bot MCP Server - A Python server for WeCom (WeChat Work) bot following the Model Context Protocol (MCP)"
 authors = [
     {name = "longhao", email = "hal.long@outlook.com"}
@@ -42,7 +42,7 @@ Issues = "https://github.com/loonghao/wecom-bot-mcp-server/issues"
 
 [tool.commitizen]
 name = "cz_conventional_commits"
-version = "0.2.0"
+version = "0.3.0"
 tag_format = "v$version"
 version_files = [
     "pyproject.toml:version",

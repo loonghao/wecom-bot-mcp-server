@@ -1,3 +1,9 @@
+## v0.3.0 (2025-03-01)
+
+### Feat
+
+- Enhance WeCom Bot MCP Server with new features and improvements
+
 ## v0.2.0 (2025-02-27)
 
 ### Feat

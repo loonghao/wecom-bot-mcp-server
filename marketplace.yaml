@@ -1,5 +1,5 @@
 name: wecom-bot-mcp-server
-version: 0.2.0
+version: 0.3.0
 description: A WeCom (WeChat Work) bot server following the Model Context Protocol (MCP)
 
 author:
