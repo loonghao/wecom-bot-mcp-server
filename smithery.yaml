@@ -34,7 +34,8 @@ startCommand:
     # A function that produces the CLI command to start the MCP on stdio.
     |-
     config => ({
-      command: 'wecom-bot-mcp-server',
+      command: 'uvx',
+      args: ['wecom-bot-mcp-server'],
       env: {
         WECOM_WEBHOOK_URL: config.wecomWebhookUrl,
         MCP_LOG_LEVEL: config.logLevel,
@@ -59,6 +60,7 @@ installation:
     - loguru>=0.7.3
     - aiohttp>=3.11.13
     - backoff>=2.2.1
+    - uvicorn>=0.34.0
 
 capabilities:
   - send_message:

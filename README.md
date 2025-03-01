@@ -227,6 +227,16 @@ uvx nox -s lint
 uvx nox -s lint_fix
 ```
 
+### Building and Publishing
+
+```bash
+# Build the package
+uv build
+
+# Build and publish to PyPI
+uv build && twine upload dist/*
+```
+
 ## Project Structure
 
 ```

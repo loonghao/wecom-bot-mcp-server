@@ -36,6 +36,7 @@ requirements:
     - loguru>=0.7.3
     - aiohttp>=3.11.13
     - backoff>=2.2.1
+    - uvicorn>=0.34.0
 
 configuration:
   env_vars:
@@ -62,7 +63,7 @@ documentation:
   setup: |
     1. Install the package:
        ```bash
-       pip install wecom-bot-mcp-server
+       uv pip install wecom-bot-mcp-server
        ```
     2. Set WECOM_WEBHOOK_URL environment variable:
        ```bash
@@ -145,6 +146,7 @@ examples:
       USER: "深圳今天天气怎么样？发送到企业微信"
       ASSISTANT: "我会查询深圳天气并发送到企业微信"
 
+      # 使用 uvx 运行命令
       await mcp.send_message(
           content="深圳天气：\n- 温度：25°C\n- 天气：晴\n- 空气质量：优",
           msg_type="markdown"
@@ -156,6 +158,7 @@ examples:
       USER: "帮我发送下午3点的项目评审会议提醒，提醒张三和李四参加"
       ASSISTANT: "好的，我来发送会议提醒"
 
+      # 使用 uvx 运行命令
       await mcp.send_message(
           content="## 项目评审会议提醒\n\n时间：今天下午 3:00\n地点：会议室 A\n\n请准时参加！",
           msg_type="markdown",
@@ -168,6 +171,7 @@ examples:
       USER: "把这份周报发送到企业微信群"
       ASSISTANT: "好的，我来发送周报"
 
+      # 使用 uvx 运行命令
       await mcp.send_message(
           content=Path("weekly_report.docx"),
           msg_type="file"
