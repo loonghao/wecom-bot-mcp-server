@@ -57,11 +57,11 @@ def test_encode_text_normal():
 
 def test_encode_text_with_special_chars():
     """Test encoding text with special characters."""
-    input_text = 'Text with "quotes" and \\backslashes\\nand newlines'
+    input_text = 'Text with "quotes" and \\backslashes\nand newlines'
     output_text = encode_text(input_text)
 
     # Verify special characters are escaped
-    assert '"' not in output_text.replace('\\"', "")  # 检查原始引号已被转义
+    assert '"' not in output_text.replace('\\"', "")  # Check that original quotes are escaped
     assert '\\"' in output_text
     assert "\\\\" in output_text
     assert "\\n" in output_text
@@ -89,6 +89,22 @@ def test_encode_text_complex_formatting():
     assert "# Heading" in output_text
     assert "- Item" in output_text
     assert "print('hello')" in output_text
+
+
+def test_encode_text_markdown_mode():
+    """Test encoding text in markdown mode."""
+    input_text = "# Heading\n\n- Item 1\n- Item 2\n\n```code\nprint('hello')\n```"
+    output_text = encode_text(input_text, msg_type="markdown")
+
+    # Newlines should be preserved (not escaped) in markdown mode
+    assert output_text.count("\\n") == 0
+    assert "\n" in output_text
+
+    # Backslashes and quotes should still be escaped
+    input_with_special = 'Markdown with "quotes" and \\backslashes'
+    output_with_special = encode_text(input_with_special, msg_type="markdown")
+    assert '\\"' in output_with_special
+    assert "\\\\" in output_with_special
 
 
 @patch("logging.getLogger")

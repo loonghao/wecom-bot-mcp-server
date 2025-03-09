@@ -229,7 +229,22 @@ async def test_prepare_message_content_success(mock_encode_text):
 
     # Assertions
     assert result == "Encoded message"
-    mock_encode_text.assert_called_once_with("Test message")
+    mock_encode_text.assert_called_once_with("Test message", "text")
+
+
+@pytest.mark.asyncio
+@patch("wecom_bot_mcp_server.message.encode_text")
+async def test_prepare_markdown_content_success(mock_encode_text):
+    """Test _prepare_message_content with markdown type."""
+    # Setup mock
+    mock_encode_text.return_value = "Encoded markdown"
+
+    # Call function
+    result = await _prepare_message_content("# Test markdown", msg_type="markdown")
+
+    # Assertions
+    assert result == "Encoded markdown"
+    mock_encode_text.assert_called_once_with("# Test markdown", "markdown")
 
 
 @pytest.mark.asyncio

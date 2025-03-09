@@ -86,7 +86,7 @@ async def send_message(
 
         # Get webhook URL and prepare message
         base_url = await _get_webhook_url(ctx)
-        fixed_content = await _prepare_message_content(content, ctx)
+        fixed_content = await _prepare_message_content(content, ctx, msg_type)
 
         # Add message to history
         message_history.append({"role": "assistant", "content": content})
@@ -160,12 +160,13 @@ async def _get_webhook_url(ctx: Context | None = None) -> str:
         raise
 
 
-async def _prepare_message_content(content: str, ctx: Context | None = None) -> str:
+async def _prepare_message_content(content: str, ctx: Context | None = None, msg_type: str = "text") -> str:
     """Prepare message content for sending.
 
     Args:
         content: Message content
         ctx: FastMCP context
+        msg_type: Message type (text, markdown, etc.)
 
     Returns:
         str: Encoded message content
@@ -175,7 +176,7 @@ async def _prepare_message_content(content: str, ctx: Context | None = None) -> 
 
     """
     try:
-        fixed_content = encode_text(content)
+        fixed_content = encode_text(content, msg_type)
         logger.info(f"Sending message: {fixed_content}")
         return fixed_content
     except ValueError as e:

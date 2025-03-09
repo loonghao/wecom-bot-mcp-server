@@ -30,7 +30,7 @@ def get_webhook_url() -> str:
     return webhook_url
 
 
-def encode_text(text: str) -> str:
+def encode_text(text: str, msg_type: str = "text") -> str:
     """Encode text for sending to WeCom.
 
     Uses ftfy to automatically fix text encoding issues and normalize Unicode.
@@ -38,6 +38,7 @@ def encode_text(text: str) -> str:
 
     Args:
         text: Input text that may have encoding issues
+        msg_type: Message type (text, markdown, etc.)
 
     Returns:
         str: Fixed text with proper handling of Unicode characters.
@@ -49,8 +50,18 @@ def encode_text(text: str) -> str:
     try:
         # Fix text encoding and normalize Unicode
         fixed_text = ftfy.fix_text(text)
-        # Escape special characters but don't wrap in quotes
-        escaped_text = fixed_text.replace("\\", "\\\\").replace('"', '\\"').replace("\n", "\\n").replace("\t", "\\t")
+
+        # For markdown messages, preserve newlines and tabs
+        if msg_type.lower() == "markdown":
+            # Only escape backslashes and double quotes, preserve newlines and tabs
+            escaped_text = fixed_text.replace("\\", "\\\\").replace('"', '\\"')
+        else:
+            # For other message types, escape all special characters
+            escaped_text = (
+                fixed_text.replace("\\", "\\\\").replace('"', '\\"').replace("\n", "\\n").replace("\t", "\\t")
+            )
+
+        # Return the escaped text directly without adding extra quotes
         return escaped_text
     except Exception as e:
         logger = logging.getLogger(__name__)

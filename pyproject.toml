@@ -1,42 +1,44 @@
 [build-system]
-requires = ["hatchling>=1.18.0"]
-build-backend = "hatchling.build"
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
 
-[project]
+[tool.poetry]
 name = "wecom-bot-mcp-server"
 version = "0.4.0"
 description = "WeCom Bot MCP Server - A Python server for WeCom (WeChat Work) bot following the Model Context Protocol (MCP)"
-authors = [
-    {name = "longhao", email = "hal.long@outlook.com"}
-]
+authors = ["longhao <hal.long@outlook.com>"]
 readme = "README.md"
-requires-python = ">=3.10"
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
-dependencies = [
-    "mcp>=1.3.0",
-    "notify-bridge>=0.3.0",
-    "uvicorn>=0.34.0",
-    "platformdirs>=4.2.0",
-    "pydantic>=2.6.1",
-    "ftfy>=6.3.1",
-    "httpx>=0.28.1",
-    "pillow>=10.2.0",
-    "svglib>=1.5.1",
-    "circuitbreaker>=2.0.0",
-    "tenacity>=9.0.0",
-    "loguru>=0.7.3",
-    "aiohttp>=3.11.13",
-    "backoff>=2.2.1",
-]
 
-[project.scripts]
+[tool.poetry.dependencies]
+python = ">=3.10,<4.0"
+mcp = ">=1.3.0"
+notify-bridge = ">=0.3.0"
+platformdirs = ">=4.2.0"
+pydantic = ">=2.6.1"
+ftfy = ">=6.3.1"
+httpx = ">=0.28.1"
+pillow = ">=10.2.0"
+svglib = ">=1.5.1"
+tenacity = ">=9.0.0"
+loguru = ">=0.7.3"
+aiohttp = ">=3.11.13"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.4.0"
+pytest-cov = "^4.1.0"
+pytest-asyncio = "^0.21.1"
+mypy = "^1.5.1"
+ruff = "^0.1.0"
+
+[tool.poetry.scripts]
 wecom-bot-mcp-server = "wecom_bot_mcp_server.server:main"
 
-[project.urls]
+[tool.poetry.urls]
 Homepage = "https://github.com/loonghao/wecom-bot-mcp-server"
 Issues = "https://github.com/loonghao/wecom-bot-mcp-server/issues"
 
@@ -118,38 +120,6 @@ line-ending = "auto"
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]
 "noxfile.py" = ["E402", "I001"]
-
-[tool.hatch.build.targets.wheel]
-packages = ["src/wecom_bot_mcp_server"]
-
-[tool.hatch.envs.default]
-dependencies = [
-    "pytest",
-    "pytest-cov",
-    "pytest-asyncio",
-    "ruff",
-    "mypy",
-    "nox",
-    "commitizen",
-]
-
-[tool.hatch.envs.test]
-dependencies = [
-    "pytest",
-    "pytest-cov",
-    "pytest-asyncio",
-    "pillow",
-    "svglib",
-    "reportlab",
-    "httpx",
-]
-
-[tool.hatch.envs.lint]
-dependencies = [
-    "ruff",
-    "mypy",
-    "isort",
-]
 
 [tool.isort]
 # Enforce import section headers.
