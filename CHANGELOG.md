@@ -1,3 +1,9 @@
+## v0.5.0 (2025-03-09)
+
+### Feat
+
+- migrate to Poetry and fix Markdown formatting issues
+
 ## v0.4.0 (2025-03-01)
 
 ### Feat
