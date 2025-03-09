@@ -26,32 +26,43 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: '3.x'
-    - name: Install dependencies
-      shell: bash
+        python-version: '3.10'
+        
+    # 缓存 Poetry 依赖
+    - name: Cache Poetry dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pypoetry
+        key: ${{ runner.os }}-poetry-${{ hashFiles('**/poetry.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-poetry-
+          
+    - name: Install Poetry
       run: |
-        python -m pip install uv
-        uv venv
-        if [ "$RUNNER_OS" = "Windows" ]; then
-          source .venv/Scripts/activate
-        else
-          source .venv/bin/activate
-        fi
-        uv pip install -e .
+        python -m pip install --upgrade pip
+        pip install uv
         uv --version
-        uv build
+        
+    - name: Install dependencies
+      run: |
+        uvx poetry install
+        uvx poetry build
+        
     # Note that we don't need credentials.
     # We rely on https://docs.pypi.org/trusted-publishers/.
     - name: Upload to PyPI
       uses: pypa/gh-action-pypi-publish@release/v1
       with:
         packages-dir: dist
+        verbose: true
+        print-hash: true
+        
     - name: Generate changelog
       id: changelog
       uses: jaywcjlove/changelog-generator@main
       with:
         token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-        filter-author: (|dependabot|renovate\\[bot\\]|dependabot\\[bot\\]|Renovate Bot)
+        filter-author: (|dependabot|renovate\[bot\]|dependabot\[bot\]|Renovate Bot)
         filter: '[R|r]elease[d]\s+[v|V]\d(\.\d+){0,2}'
         template: |
           ## Bugs
@@ -64,6 +75,7 @@ jobs:
           {{chore,style,ci||🔶 Nothing change}}
           ## Unknown
           {{__unknown__}}
+          
     - uses: ncipollo/release-action@v1
       with:
         artifacts: "dist/*"
