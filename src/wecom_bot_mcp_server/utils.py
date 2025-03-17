@@ -33,7 +33,7 @@ def get_webhook_url() -> str:
     if not webhook_url.startswith("http://") and not webhook_url.startswith("https://"):
         raise WeComError(
             f"WECOM_WEBHOOK_URL must start with 'http://' or 'https://'. Got: '{webhook_url}'",
-            ErrorCode.VALIDATION_ERROR
+            ErrorCode.VALIDATION_ERROR,
         )
 
     return webhook_url

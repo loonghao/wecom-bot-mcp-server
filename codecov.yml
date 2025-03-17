@@ -1,6 +1,11 @@
 coverage:
   status:
     project: off
+  range: "70...100"
+  # Add the following configuration to resolve the "Missing base commit" issue
+  allow_coverage_offsets: true
+  notify:
+    after_n_builds: 1
 
 github_checks:
   annotations: false

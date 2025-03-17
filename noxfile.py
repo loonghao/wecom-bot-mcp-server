@@ -4,12 +4,9 @@ This module configures Nox sessions for development tasks like testing, linting,
 """
 
 # Import built-in modules
-import argparse
 import os
 from pathlib import Path
-import shutil
 import sys
-import zipfile
 
 ROOT = os.path.dirname(__file__)
 THIS_ROOT = Path(ROOT)

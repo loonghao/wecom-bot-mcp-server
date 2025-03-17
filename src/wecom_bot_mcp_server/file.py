@@ -75,6 +75,10 @@ async def _validate_file(file_path: str | Path, ctx: Context | None = None) -> P
         WeComError: If file is not found or not a file
 
     """
+    if ctx:
+        await ctx.report_progress(0.2)
+        await ctx.info(f"Validating file: {file_path}")
+
     # Convert to Path object if string
     if isinstance(file_path, str):
         file_path = Path(file_path)
@@ -110,6 +114,10 @@ async def _get_webhook_url(ctx: Context | None = None) -> str:
         WeComError: If webhook URL is not found
 
     """
+    if ctx:
+        await ctx.report_progress(0.3)
+        await ctx.info("Getting webhook URL")
+
     try:
         return get_webhook_url()
     except WeComError as e:
