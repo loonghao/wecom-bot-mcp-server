@@ -1,14 +1,27 @@
 coverage:
-  status:
-    project: off
+  precision: 2
+  round: down
   range: "70...100"
-  # Add the following configuration to resolve the "Missing base commit" issue
-  allow_coverage_offsets: true
-  notify:
-    after_n_builds: 1
+  status:
+    project:
+      default:
+        target: auto
+        threshold: 0%
+        base: auto
+        if_ci_failed: success
+        informational: true
+    patch:
+      default:
+        target: auto
+        threshold: 0%
+        base: auto
+        if_ci_failed: success
+        informational: true
+
+comment: false
 
 github_checks:
-  annotations: false
+  annotations: true
 
 ignore:
   - "noxfile.py"
