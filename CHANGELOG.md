@@ -1,3 +1,10 @@
+## v0.6.0 (2025-03-17)
+
+### Feat
+
+- Add progress reporting, file validation, and pytest fixtures
+- **utils**: Add URL validation and improved logging
+
 ## v0.5.0 (2025-03-09)
 
 ### Feat
