@@ -39,28 +39,38 @@ async def download_image(url: str, ctx: Context | None = None) -> Path:
         await ctx.info(f"Downloading image from {url}")
 
     try:
+        # Create a temporary file with the correct extension
+        temp_dir = Path(tempfile.gettempdir()) / "wecom_images"
+        os.makedirs(temp_dir, exist_ok=True)
+
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as response:
                 if response.status != 200:
+                    error_msg = f"Failed to download image: HTTP {response.status}"
+                    if ctx:
+                        await ctx.error(error_msg)
                     raise WeComError(
-                        f"Failed to download image: HTTP {response.status}",
+                        error_msg,
                         ErrorCode.NETWORK_ERROR,
                     )
 
                 content_type = response.headers.get("Content-Type", "")
                 if not content_type.startswith("image/"):
-                    raise WeComError(f"Invalid content type: {content_type}", ErrorCode.FILE_ERROR)
+                    error_msg = f"Invalid content type: {content_type}"
+                    if ctx:
+                        await ctx.error(error_msg)
+                    raise WeComError(error_msg, ErrorCode.FILE_ERROR)
 
-                # Create a temporary file with the correct extension
+                # Update file extension based on content type
                 ext = content_type.split("/")[1]
-                temp_dir = Path(tempfile.gettempdir()) / "wecom_images"
-                os.makedirs(temp_dir, exist_ok=True)
+                final_file = temp_dir / f"image_{hash(url)}.{ext}"
 
-                temp_file = temp_dir / f"image_{hash(url)}.{ext}"
-                with open(temp_file, "wb") as f:
-                    f.write(await response.read())
+                # Write the content to the file
+                with open(final_file, "wb") as f:
+                    content = await response.read()
+                    f.write(content)
 
-                return temp_file
+                return final_file
 
     except aiohttp.ClientError as e:
         error_msg = f"Failed to download image: {e!s}"
@@ -201,14 +211,16 @@ async def _send_image_to_wecom(image_path: Path, base_url: str) -> Any:
 
     # Use NotifyBridge to send image directly
     async with NotifyBridge() as nb:
-        return await nb.send_async(
+        response = await nb.send_async(
             "wecom",
             {
                 "base_url": base_url,
                 "msg_type": "image",
-                "image_path": str(image_path),
+                "image": str(image_path.absolute()),
             },
         )
+
+        return response
 
 
 async def _process_image_response(response: Any, image_path: Path, ctx: Context | None = None) -> dict[str, Any]:
@@ -236,7 +248,7 @@ async def _process_image_response(response: Any, image_path: Path, ctx: Context 
 
     # Check WeChat API response
     data = getattr(response, "data", {})
-    if data.get("errcode", -1) != 0:
+    if isinstance(data, dict) and data.get("errcode", -1) != 0:
         error_msg = f"WeChat API error: {data.get('errmsg', 'Unknown error')}"
         logger.error(error_msg)
         if ctx:
@@ -249,4 +261,8 @@ async def _process_image_response(response: Any, image_path: Path, ctx: Context 
         await ctx.report_progress(1.0)
         await ctx.info(success_msg)
 
-    return {"status": "success", "message": success_msg, "image_path": str(image_path)}
+    return {
+        "status": "success",
+        "message": success_msg,
+        "image_path": str(image_path),
+    }

@@ -8,6 +8,7 @@ A Model Context Protocol (MCP) compliant server implementation for WeCom (WeChat
 
 [![PyPI version](https://badge.fury.io/py/wecom-bot-mcp-server.svg)](https://badge.fury.io/py/wecom-bot-mcp-server)
 [![Python Version](https://img.shields.io/pypi/pyversions/wecom-bot-mcp-server.svg)](https://pypi.org/project/wecom-bot-mcp-server/)
+[![codecov](https://codecov.io/gh/loonghao/wecom-bot-mcp-server/branch/main/graph/badge.svg)](https://app.codecov.io/gh/loonghao/wecom-bot-mcp-server)
 [![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
 [![smithery badge](https://smithery.ai/badge/wecom-bot-mcp-server)](https://smithery.ai/server/wecom-bot-mcp-server)
 
@@ -96,11 +97,13 @@ $env:MCP_LOG_FILE = "path/to/custom/log/file.log"  # Custom log file path
 
 ### Log Management
 
-The logging system uses `platformdirs` for cross-platform log file management:
+The logging system uses `platformdirs.user_log_dir()` for cross-platform log file management:
 
-- Windows: `C:\Users\<username>\AppData\Local\hal\wecom-bot-mcp-server\logs`
-- Linux: `~/.local/share/wecom-bot-mcp-server/logs`
-- macOS: `~/Library/Application Support/wecom-bot-mcp-server/logs`
+- Windows: `C:\Users\<username>\AppData\Local\hal\wecom-bot-mcp-server`
+- Linux: `~/.local/share/hal/wecom-bot-mcp-server`
+- macOS: `~/Library/Application Support/hal/wecom-bot-mcp-server`
+
+The log file is named `mcp_wecom.log` and is stored in the above directory.
 
 ## Usage
 

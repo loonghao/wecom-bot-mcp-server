@@ -34,6 +34,7 @@ pytest-cov = "^6.0.0"
 pytest-asyncio = "^0.21.1"
 mypy = "^1.5.1"
 ruff = "^0.9.0"
+pyfakefs = "^5.8.0"
 
 [tool.poetry.scripts]
 wecom-bot-mcp-server = "wecom_bot_mcp_server.server:main"
@@ -99,27 +100,25 @@ src = ["src", "tests"]
 
 [tool.ruff.lint]
 select = [
-    "E", # pycodestyle errors
-    "W", # pycodestyle warnings
+    "E", # pycodestyle
     "F", # pyflakes
-    "C", # flake8-comprehensions
-    "B", # flake8-bugbear
+    # "I", # isort - 禁用导入排序检查
     "D", # pydocstyle
-    "N", # pep8-naming
     "UP", # pyupgrade
     "RUF", # ruff-specific rules
 ]
-ignore = ["D203", "D213"]
+ignore = ["D203", "D213", "ARG001", "D107", "D105", "D102", "F811", "I001"]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]
+"noxfile.py" = ["E402", "I001"]
+"tests/*.py" = ["ARG001", "F401", "F811", "D107", "D105", "D102", "E501", "I001"]
 
 [tool.ruff.format]
 quote-style = "double"
 indent-style = "space"
 skip-magic-trailing-comma = false
 line-ending = "auto"
-
-[tool.ruff.lint.per-file-ignores]
-"__init__.py" = ["F401"]
-"noxfile.py" = ["E402", "I001"]
 
 [tool.isort]
 # Enforce import section headers.

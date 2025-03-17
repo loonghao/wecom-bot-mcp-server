@@ -205,19 +205,33 @@ async def _send_message_to_wecom(
     Returns:
         Any: Response from NotifyBridge
 
+    Raises:
+        WeComError: If URL is invalid or request fails
+
     """
+    # Validate base_url format again before sending
+    if not base_url.startswith("http://") and not base_url.startswith("https://"):
+        error_msg = f"Invalid webhook URL format: '{base_url}'. URL must start with 'http://' or 'https://'"
+        logger.error(error_msg)
+        raise WeComError(error_msg, ErrorCode.VALIDATION_ERROR)
+
     # Use NotifyBridge to send message
-    async with NotifyBridge() as nb:
-        return await nb.send_async(
-            "wecom",
-            {
-                "base_url": base_url,
-                "msg_type": msg_type,
-                "content": content,
-                "mentioned_list": mentioned_list or [],
-                "mentioned_mobile_list": mentioned_mobile_list or [],
-            },
-        )
+    try:
+        async with NotifyBridge() as nb:
+            return await nb.send_async(
+                "wecom",
+                {
+                    "base_url": base_url,
+                    "msg_type": msg_type,
+                    "content": content,
+                    "mentioned_list": mentioned_list or [],
+                    "mentioned_mobile_list": mentioned_mobile_list or [],
+                },
+            )
+    except Exception as e:
+        error_msg = f"Failed to send message via NotifyBridge: {e}. URL: {base_url}, Type: {msg_type}"
+        logger.error(error_msg)
+        raise WeComError(error_msg, ErrorCode.NETWORK_ERROR) from e
 
 
 async def _process_message_response(response: Any, ctx: Context | None = None) -> dict[str, str]:

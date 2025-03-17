@@ -46,6 +46,23 @@ def test_get_webhook_url_missing():
         assert "WECOM_WEBHOOK_URL environment variable not set" in str(exc_info.value)
 
 
+def test_get_webhook_url_invalid_protocol():
+    """Test retrieving webhook URL with invalid protocol."""
+    test_url = "invalid-webhook.example.com"  # Missing http:// or https://
+
+    with patch.dict(os.environ, {"WECOM_WEBHOOK_URL": test_url}, clear=False):
+        # Clear the lru_cache to ensure we get a fresh URL
+        get_webhook_url.cache_clear()
+
+        # Verify that an exception is raised
+        with pytest.raises(WeComError) as exc_info:
+            get_webhook_url()
+
+        # Check error message
+        assert "WECOM_WEBHOOK_URL must start with 'http://' or 'https://'" in str(exc_info.value)
+        assert test_url in str(exc_info.value)  # Verify the URL is included in the error message
+
+
 def test_encode_text_normal():
     """Test encoding normal text."""
     input_text = "Hello, world!"
