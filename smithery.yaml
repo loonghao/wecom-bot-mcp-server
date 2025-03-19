@@ -3,7 +3,7 @@
 name: wecom-bot-mcp-server
 displayName: WeCom Bot MCP Server
 description: A Python server for WeCom (WeChat Work) bot following the Model Context Protocol (MCP)
-version: 0.6.0
+version: 0.6.1
 author: longhao <hal.long@outlook.com>
 license: MIT
 repository: https://github.com/loonghao/wecom-bot-mcp-server
