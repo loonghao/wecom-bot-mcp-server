@@ -1,3 +1,9 @@
+## v0.6.2 (2025-03-20)
+
+### Fix
+
+- **deps**: update dependency platformdirs to v4.3.7
+
 ## v0.6.1 (2025-03-19)
 
 ### Fix
