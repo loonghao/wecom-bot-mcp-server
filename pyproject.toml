@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "wecom-bot-mcp-server"
-version = "0.6.4"
+version = "0.6.5"
 description = "WeCom Bot MCP Server - A Python server for WeCom (WeChat Work) bot following the Model Context Protocol (MCP)"
 authors = ["longhao <hal.long@outlook.com>"]
 readme = "README.md"
@@ -45,7 +45,7 @@ Issues = "https://github.com/loonghao/wecom-bot-mcp-server/issues"
 
 [tool.commitizen]
 name = "cz_conventional_commits"
-version = "0.6.4"
+version = "0.6.5"
 tag_format = "v$version"
 version_files = [
     "pyproject.toml:version",

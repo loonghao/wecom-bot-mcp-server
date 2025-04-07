@@ -1,3 +1,9 @@
+## v0.6.5 (2025-04-07)
+
+### Fix
+
+- **deps**: update dependency tenacity to v9.1.2
+
 ## v0.6.4 (2025-04-07)
 
 ### Fix
