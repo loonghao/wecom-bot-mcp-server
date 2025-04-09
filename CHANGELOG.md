@@ -1,3 +1,9 @@
+## v0.6.6 (2025-04-09)
+
+### Fix
+
+- **deps**: update dependency pydantic to v2.11.3
+
 ## v0.6.5 (2025-04-07)
 
 ### Fix
