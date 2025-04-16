@@ -1,3 +1,9 @@
+## v0.6.7 (2025-04-16)
+
+### Fix
+
+- **deps**: update dependency pillow to v11.2.1
+
 ## v0.6.6 (2025-04-09)
 
 ### Fix
