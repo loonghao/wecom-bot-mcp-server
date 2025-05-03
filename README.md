@@ -1,3 +1,5 @@
+[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/loonghao-wecom-bot-mcp-server-badge.png)](https://mseep.ai/app/loonghao-wecom-bot-mcp-server)
+
 # WeCom Bot MCP Server
 
 <div align="center">
