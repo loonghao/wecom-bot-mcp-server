@@ -807,14 +807,14 @@ source = ["Cython (>=3.0.11,<3.1.0)"]
 
 [[package]]
 name = "mcp"
-version = "1.9.0"
+version = "1.9.1"
 description = "Model Context Protocol SDK"
 optional = false
 python-versions = ">=3.10"
 groups = ["main"]
 files = [
-    {file = "mcp-1.9.0-py3-none-any.whl", hash = "sha256:9dfb89c8c56f742da10a5910a1f64b0d2ac2c3ed2bd572ddb1cfab7f35957178"},
-    {file = "mcp-1.9.0.tar.gz", hash = "sha256:905d8d208baf7e3e71d70c82803b89112e321581bcd2530f9de0fe4103d28749"},
+    {file = "mcp-1.9.1-py3-none-any.whl", hash = "sha256:2900ded8ffafc3c8a7bfcfe8bc5204037e988e753ec398f371663e6a06ecd9a9"},
+    {file = "mcp-1.9.1.tar.gz", hash = "sha256:19879cd6dde3d763297617242888c2f695a95dfa854386a6a68676a646ce75e4"},
 ]
 
 [package.dependencies]
