@@ -1506,22 +1506,22 @@ dev = ["argcomplete", "attrs (>=19.2)", "hypothesis (>=3.56)", "mock", "requests
 
 [[package]]
 name = "pytest-asyncio"
-version = "0.21.2"
+version = "1.0.0"
 description = "Pytest support for asyncio"
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.9"
 groups = ["dev"]
 files = [
-    {file = "pytest_asyncio-0.21.2-py3-none-any.whl", hash = "sha256:ab664c88bb7998f711d8039cacd4884da6430886ae8bbd4eded552ed2004f16b"},
-    {file = "pytest_asyncio-0.21.2.tar.gz", hash = "sha256:d67738fc232b94b326b9d060750beb16e0074210b98dd8b58a5239fa2a154f45"},
+    {file = "pytest_asyncio-1.0.0-py3-none-any.whl", hash = "sha256:4f024da9f1ef945e680dc68610b52550e36590a67fd31bb3b4943979a1f90ef3"},
+    {file = "pytest_asyncio-1.0.0.tar.gz", hash = "sha256:d15463d13f4456e1ead2594520216b225a16f781e144f8fdf6c5bb4667c48b3f"},
 ]
 
 [package.dependencies]
-pytest = ">=7.0.0"
+pytest = ">=8.2,<9"
 
 [package.extras]
-docs = ["sphinx (>=5.3)", "sphinx-rtd-theme (>=1.0)"]
-testing = ["coverage (>=6.2)", "flaky (>=3.5.0)", "hypothesis (>=5.7.1)", "mypy (>=0.931)", "pytest-trio (>=0.7.0)"]
+docs = ["sphinx (>=5.3)", "sphinx-rtd-theme (>=1)"]
+testing = ["coverage (>=6.2)", "hypothesis (>=5.7.1)"]
 
 [[package]]
 name = "pytest-cov"
@@ -1952,4 +1952,4 @@ propcache = ">=0.2.0"
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10,<4.0"
-content-hash = "07bd8331b1bede7ffa4e7474c3a5c1839252f0bb5a47794dda12aa493f8be41a"
+content-hash = "e3345866dbe14c1e36cb26e3beaf0031b476f184493b3ac2b0d655bcc1d9cfd4"
