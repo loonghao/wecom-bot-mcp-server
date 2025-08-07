@@ -34,6 +34,7 @@ class TestFastMCPIntegration(unittest.TestCase):
     def test_fastmcp_initialization(self):
         """Test actual FastMCP initialization without mocking."""
         # Import here to avoid import issues during module loading
+        # Import local modules
         from wecom_bot_mcp_server.app import mcp
 
         # Test that FastMCP instance is properly initialized
@@ -42,16 +43,18 @@ class TestFastMCPIntegration(unittest.TestCase):
         self.assertIsNotNone(mcp.instructions)
 
         # Test that the instance has the expected attributes
-        self.assertTrue(hasattr(mcp, 'run'))
-        self.assertTrue(hasattr(mcp, 'name'))
-        self.assertTrue(hasattr(mcp, 'instructions'))
+        self.assertTrue(hasattr(mcp, "run"))
+        self.assertTrue(hasattr(mcp, "name"))
+        self.assertTrue(hasattr(mcp, "instructions"))
 
     def test_fastmcp_no_initialization_errors(self):
         """Test that FastMCP initialization doesn't raise errors."""
         # This test ensures that the FastMCP API compatibility fix works
         # and that we don't get TypeError about unexpected keyword arguments
         try:
+            # Import local modules
             from wecom_bot_mcp_server.app import mcp
+
             # If we get here without exceptions, the initialization worked
             self.assertIsNotNone(mcp)
         except TypeError as e:
