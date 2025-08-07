@@ -1,3 +1,27 @@
+## v0.6.8 (2025-08-07)
+
+### Fix
+
+- sync version numbers to resolve auto-bump tag conflicts
+- update FastMCP initialization for compatibility with mcp 1.12.3
+- **deps**: update dependency mcp to v1.10.0
+- **deps**: update dependency pydantic to v2.11.7
+- **deps**: update dependency mcp to v1.9.4
+- **deps**: update dependency aiohttp to v3.12.13
+- **deps**: update dependency aiohttp to v3.12.12
+- **deps**: update dependency mcp to v1.9.3
+- **deps**: update dependency mcp to v1.9.2
+- **deps**: update dependency aiohttp to v3.12.4
+- **deps**: update dependency mcp to v1.9.1
+- **deps**: update dependency pydantic to v2.11.5
+- **deps**: update dependency aiohttp to v3.12.0
+- **deps**: update dependency mcp to v1.9.0
+- **deps**: update dependency mcp to v1.8.0
+- **deps**: update dependency platformdirs to v4.3.8
+- **deps**: update dependency mcp to v1.7.1
+- **deps**: update dependency aiohttp to v3.11.18
+- **deps**: update dependency pydantic to v2.11.4
+
 ## v0.6.7 (2025-04-16)
 
 ### Fix
