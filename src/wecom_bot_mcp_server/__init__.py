@@ -11,12 +11,12 @@ from wecom_bot_mcp_server.message import MESSAGE_HISTORY_KEY
 from wecom_bot_mcp_server.message import send_message
 
 __all__ = [
-    "ErrorCode",
     "MESSAGE_HISTORY_KEY",
+    "ErrorCode",
+    "WeComError",
+    "__version__",
     "mcp",
     "send_message",
     "send_wecom_file",
     "send_wecom_image",
-    "__version__",
-    "WeComError",
 ]
