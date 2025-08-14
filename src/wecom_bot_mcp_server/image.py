@@ -82,7 +82,7 @@ async def download_image(url: str, ctx: Context | None = None) -> Path:
 
 @mcp.tool()
 async def send_wecom_image(
-    image_path: str | Path,
+    image_path: str,
     ctx: Context | None = None,
 ) -> dict[str, Any]:
     """Send image to WeCom.

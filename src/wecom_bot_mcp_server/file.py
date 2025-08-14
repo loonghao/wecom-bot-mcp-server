@@ -18,7 +18,7 @@ from wecom_bot_mcp_server.utils import get_webhook_url
 
 @mcp.tool()
 async def send_wecom_file(
-    file_path: str | Path,
+    file_path: str,
     ctx: Context | None = None,
 ) -> dict[str, Any]:
     """Send file to WeCom.
