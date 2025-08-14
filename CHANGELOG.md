@@ -1,3 +1,13 @@
+## v0.6.10 (2025-08-14)
+
+### Fix
+
+- **mcp**: provide JSON-schema-friendly tool params and export string __version__\n\n- Change send_wecom_file/file_path and send_wecom_image/image_path to str to satisfy gemini-cli PR #5694 stricter schema typing\n- Export __version__ from package to ensure server logs a string version\n\nSigned-off-by: Hal <hal.long@outlook.com>
+
+### Refactor
+
+- **types**: avoid parameter type mutation; use local Path vars for mypy --strict\n\n- file.py: file_path_p: Path\n- image.py: image_path_p: Path\n\nSigned-off-by: Hal <hal.long@outlook.com>
+
 ## v0.6.9 (2025-08-14)
 
 ### Fix
