@@ -1,3 +1,9 @@
+## v0.6.11 (2025-08-14)
+
+### Fix
+
+- **deps**: update dependency aiohttp to v3.12.15
+
 ## v0.6.10 (2025-08-14)
 
 ### Fix
