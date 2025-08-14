@@ -1,6 +1,7 @@
 """WeCom Bot MCP Server package."""
 
 # Import local modules
+from wecom_bot_mcp_server.__version__ import __version__
 from wecom_bot_mcp_server.app import mcp
 from wecom_bot_mcp_server.errors import ErrorCode
 from wecom_bot_mcp_server.errors import WeComError
@@ -17,4 +18,5 @@ __all__ = [
     "send_message",
     "send_wecom_file",
     "send_wecom_image",
+    "__version__",
 ]
