@@ -104,7 +104,7 @@ async def send_wecom_image(
 
     try:
         # Process and validate image
-        image_path = await _process_image_path(image_path, ctx)
+        image_path_p = await _process_image_path(image_path, ctx)
 
         # Get webhook URL
         base_url = await _get_webhook_url(ctx)
@@ -114,10 +114,10 @@ async def send_wecom_image(
             await ctx.report_progress(0.5)
             await ctx.info("Sending image via notify-bridge...")
 
-        response = await _send_image_to_wecom(image_path, base_url)
+        response = await _send_image_to_wecom(image_path_p, base_url)
 
         # Process response
-        return await _process_image_response(response, image_path, ctx)
+        return await _process_image_response(response, image_path_p, ctx)
 
     except Exception as e:
         error_msg = f"Error sending image: {e!s}"

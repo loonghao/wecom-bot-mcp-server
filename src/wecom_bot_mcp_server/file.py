@@ -40,7 +40,7 @@ async def send_wecom_file(
 
     try:
         # Validate file and get webhook URL
-        file_path = await _validate_file(file_path, ctx)
+        file_path_p = await _validate_file(file_path, ctx)
         base_url = await _get_webhook_url(ctx)
 
         # Send file to WeCom
@@ -48,10 +48,10 @@ async def send_wecom_file(
             await ctx.report_progress(0.5)
             await ctx.info("Sending file to WeCom...")
 
-        response = await _send_file_to_wecom(file_path, base_url, ctx)
+        response = await _send_file_to_wecom(file_path_p, base_url, ctx)
 
         # Process response
-        return await _process_file_response(response, file_path, ctx)
+        return await _process_file_response(response, file_path_p, ctx)
 
     except Exception as e:
         error_msg = f"Error sending file: {e!s}"
