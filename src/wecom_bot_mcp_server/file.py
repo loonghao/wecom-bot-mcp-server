@@ -16,7 +16,6 @@ from wecom_bot_mcp_server.errors import WeComError
 from wecom_bot_mcp_server.utils import get_webhook_url
 
 
-@mcp.tool()
 async def send_wecom_file(
     file_path: str,
     ctx: Context | None = None,
@@ -201,3 +200,22 @@ async def _process_file_response(response: Any, file_path: Path, ctx: Context | 
         "file_size": file_path.stat().st_size,
         "media_id": data.get("media_id", ""),
     }
+
+
+@mcp.tool(name="send_wecom_file")
+async def send_wecom_file_mcp(
+    file_path: str,
+) -> dict[str, Any]:
+    """Send file to WeCom.
+
+    Args:
+        file_path: Path to the file to send
+
+    Returns:
+        dict: Response with file information and status
+
+    Raises:
+        WeComError: If file sending fails
+
+    """
+    return await send_wecom_file(file_path=file_path, ctx=None)

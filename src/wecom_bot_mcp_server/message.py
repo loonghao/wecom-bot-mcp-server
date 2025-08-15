@@ -1,12 +1,14 @@
 """Message handling functionality for WeCom Bot MCP Server."""
 
 # Import built-in modules
+from typing import Annotated
 from typing import Any
 
 # Import third-party modules
 from loguru import logger
 from mcp.server.fastmcp import Context
 from notify_bridge import NotifyBridge
+from pydantic import Field
 
 # Import local modules
 from wecom_bot_mcp_server.app import mcp
@@ -52,7 +54,6 @@ def get_formatted_message_history() -> str:
     return formatted_history
 
 
-@mcp.tool()
 async def send_message(
     content: str,
     msg_type: str = "markdown",
@@ -272,3 +273,36 @@ async def _process_message_response(response: Any, ctx: Context | None = None) -
         await ctx.info(success_msg)
 
     return {"status": "success", "message": success_msg}
+
+
+@mcp.tool(name="send_message")
+async def send_message_mcp(
+    content: str,
+    msg_type: str = "markdown",
+    mentioned_list: Annotated[list[str], Field(default_factory=list, description="List of user IDs to mention")] = [],
+    mentioned_mobile_list: Annotated[
+        list[str], Field(default_factory=list, description="List of mobile numbers to mention")
+    ] = [],
+) -> dict[str, str]:
+    """Send message to WeCom.
+
+    Args:
+        content: Message content to send
+        msg_type: Message type (markdown, text, etc.)
+        mentioned_list: List of user IDs to mention
+        mentioned_mobile_list: List of mobile numbers to mention
+
+    Returns:
+        dict: Response with status and message
+
+    Raises:
+        WeComError: If sending message fails
+
+    """
+    return await send_message(
+        content=content,
+        msg_type=msg_type,
+        mentioned_list=mentioned_list,
+        mentioned_mobile_list=mentioned_mobile_list,
+        ctx=None,
+    )
