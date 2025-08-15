@@ -1,3 +1,9 @@
+## v0.6.13 (2025-08-15)
+
+### Fix
+
+- resolve Gemini CLI parameter schema validation issues
+
 ## v0.6.12 (2025-08-14)
 
 ### Fix
