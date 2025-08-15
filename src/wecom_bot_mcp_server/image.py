@@ -80,7 +80,6 @@ async def download_image(url: str, ctx: Context | None = None) -> Path:
         raise WeComError(error_msg, ErrorCode.NETWORK_ERROR) from e
 
 
-@mcp.tool()
 async def send_wecom_image(
     image_path: str,
     ctx: Context | None = None,
@@ -266,3 +265,22 @@ async def _process_image_response(response: Any, image_path: Path, ctx: Context 
         "message": success_msg,
         "image_path": str(image_path),
     }
+
+
+@mcp.tool(name="send_wecom_image")
+async def send_wecom_image_mcp(
+    image_path: str,
+) -> dict[str, Any]:
+    """Send image to WeCom.
+
+    Args:
+        image_path: Path to the image file to send
+
+    Returns:
+        dict: Response with image information and status
+
+    Raises:
+        WeComError: If image sending fails
+
+    """
+    return await send_wecom_image(image_path=image_path, ctx=None)
