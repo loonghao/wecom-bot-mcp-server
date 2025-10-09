@@ -38,11 +38,11 @@ def test_error_code_enum():
     from wecom_bot_mcp_server import ErrorCode
 
     # Verify ErrorCode has expected values
-    assert hasattr(ErrorCode, "INVALID_WEBHOOK_URL")
+    assert hasattr(ErrorCode, "UNKNOWN")
+    assert hasattr(ErrorCode, "VALIDATION_ERROR")
     assert hasattr(ErrorCode, "NETWORK_ERROR")
+    assert hasattr(ErrorCode, "API_FAILURE")
     assert hasattr(ErrorCode, "FILE_ERROR")
-    assert hasattr(ErrorCode, "INVALID_MESSAGE_TYPE")
-    assert hasattr(ErrorCode, "SEND_FAILED")
 
 
 def test_wecom_error_class():

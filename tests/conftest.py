@@ -621,9 +621,12 @@ def mock_image_send():
         mock_image_open.return_value = MagicMock()
         mock_get_webhook_url.return_value = "https://example.com/webhook"
 
-        # Setup NotifyBridge mock
+        # Setup NotifyBridge mock with proper response object
         mock_nb_instance = AsyncMock()
-        mock_nb_instance.send_async.return_value = {"errcode": 0, "errmsg": "ok"}
+        mock_response = MagicMock()
+        mock_response.success = True
+        mock_response.data = {"errcode": 0, "errmsg": "ok"}
+        mock_nb_instance.send_async.return_value = mock_response
         mock_notify_bridge.return_value.__aenter__.return_value = mock_nb_instance
 
         yield mock_exists, mock_image_open, mock_notify_bridge, mock_get_webhook_url, mock_nb_instance
@@ -721,6 +724,29 @@ def mock_image_with_context():
         mock_ctx = AsyncMock()
 
         yield mock_exists, mock_image_open, mock_notify_bridge, mock_get_webhook_url, mock_nb_instance, mock_ctx
+
+
+@pytest.fixture
+def mock_message_send():
+    """Fixture for mocking message send operations."""
+    with (
+        patch("wecom_bot_mcp_server.message.NotifyBridge") as mock_notify_bridge,
+        patch("wecom_bot_mcp_server.message.get_webhook_url") as mock_get_webhook_url,
+    ):
+        # Setup webhook URL
+        mock_get_webhook_url.return_value = "https://example.com/webhook"
+
+        # Setup NotifyBridge response
+        mock_response = MagicMock()
+        mock_response.success = True
+        mock_response.data = {"errcode": 0, "errmsg": "ok"}
+
+        # Setup NotifyBridge instance
+        mock_nb_instance = AsyncMock()
+        mock_nb_instance.send_async.return_value = mock_response
+        mock_notify_bridge.return_value.__aenter__.return_value = mock_nb_instance
+
+        yield mock_notify_bridge, mock_get_webhook_url, mock_nb_instance
 
 
 @pytest.fixture(autouse=True)
