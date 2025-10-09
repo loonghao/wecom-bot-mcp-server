@@ -1,3 +1,12 @@
+## v0.6.16 (2025-10-09)
+
+### Fix
+
+- accept NETWORK_ERROR in integration tests
+- correct test expectations to match actual error codes and fixtures
+- remove conflicting default and default_factory in Field
+- improve testing coverage and remove unnecessary svglib dependency
+
 ## v0.6.15 (2025-09-19)
 
 ### Fix
