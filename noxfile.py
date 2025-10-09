@@ -67,10 +67,30 @@ def lint_fix(session):
 
 
 @nox.session
+def test_imports(session):
+    """Test that package can be imported correctly."""
+    session.install("-e", ".")
+
+    # Test basic import
+    session.run(
+        "python",
+        "-c",
+        "import wecom_bot_mcp_server; print('Package imported successfully')",
+    )
+
+    # Test public API imports
+    session.run(
+        "python",
+        "-c",
+        "from wecom_bot_mcp_server import mcp, send_message, send_wecom_file, send_wecom_image, ErrorCode, WeComError, MESSAGE_HISTORY_KEY; print('All public APIs imported successfully')",
+    )
+
+
+@nox.session
 def pytest(session):
     """Run pytest with coverage."""
     # Install test dependencies
-    session.install("pytest", "pytest-cov", "pytest-asyncio", "pillow", "svglib", "reportlab", "httpx", "pyfakefs")
+    session.install("pytest", "pytest-cov", "pytest-asyncio", "pillow", "httpx", "pyfakefs")
     session.install("-e", ".")
 
     # Get pytest arguments

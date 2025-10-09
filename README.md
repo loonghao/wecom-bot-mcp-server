@@ -60,7 +60,11 @@ npx -y @smithery/cli install wecom-bot-mcp-server --client claude
 #### Install from PyPI:
 
 ```bash
+# Using pip
 pip install wecom-bot-mcp-server
+
+# Or using uv (recommended for faster installation)
+uv pip install wecom-bot-mcp-server
 ```
 
 #### Configure MCP manually:
@@ -68,7 +72,10 @@ pip install wecom-bot-mcp-server
 Create or update your MCP configuration file:
 
 ```json
+// For Claude Desktop on macOS: ~/Library/Application Support/Claude/claude_desktop_config.json
+// For Claude Desktop on Windows: %APPDATA%\Claude\claude_desktop_config.json
 // For Windsurf: ~/.windsurf/config.json
+// For Cline in VSCode: VSCode Settings > Cline > MCP Settings
 {
   "mcpServers": {
     "wecom": {
@@ -101,11 +108,15 @@ $env:MCP_LOG_FILE = "path/to/custom/log/file.log"  # Custom log file path
 
 The logging system uses `platformdirs.user_log_dir()` for cross-platform log file management:
 
-- Windows: `C:\Users\<username>\AppData\Local\hal\wecom-bot-mcp-server`
-- Linux: `~/.local/share/hal/wecom-bot-mcp-server`
-- macOS: `~/Library/Application Support/hal/wecom-bot-mcp-server`
+- Windows: `C:\Users\<username>\AppData\Local\hal\wecom-bot-mcp-server\Logs`
+- Linux: `~/.local/state/hal/wecom-bot-mcp-server/log`
+- macOS: `~/Library/Logs/hal/wecom-bot-mcp-server`
 
 The log file is named `mcp_wecom.log` and is stored in the above directory.
+
+You can customize the log level and file path using environment variables:
+- `MCP_LOG_LEVEL`: Set to DEBUG, INFO, WARNING, ERROR, or CRITICAL
+- `MCP_LOG_FILE`: Set to a custom log file path
 
 ## Usage
 
@@ -215,11 +226,17 @@ pip install -e ".[dev]"
 ### Testing
 
 ```bash
-# Using uv (recommended)
+# Run all tests with coverage
 uvx nox -s pytest
 
-# Or using traditional method
-nox -s pytest
+# Run import tests only
+uvx nox -s test_imports
+
+# Run specific test file
+uvx nox -s pytest -- tests/test_message.py
+
+# Run tests with verbose output
+uvx nox -s pytest -- -v
 ```
 
 ### Code Style
@@ -236,11 +253,20 @@ uvx nox -s lint_fix
 
 ```bash
 # Build the package
-uv build
+uvx nox -s build
 
-# Build and publish to PyPI
-uv build && twine upload dist/*
+# Publish to PyPI (requires authentication)
+uvx nox -s publish
 ```
+
+### Continuous Integration
+
+The project uses GitHub Actions for CI/CD:
+- **MR Checks**: Runs on all pull requests, tests on Ubuntu, Windows, and macOS with Python 3.10, 3.11, and 3.12
+- **Code Coverage**: Uploads coverage reports to Codecov
+- **Import Tests**: Ensures the package can be imported correctly after installation
+
+All dependencies are automatically tested during CI to catch issues early.
 
 ## Project Structure
 

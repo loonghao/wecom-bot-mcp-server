@@ -41,6 +41,11 @@ jobs:
         run: |
           uv pip install --system -e .
 
+      # Test that package can be imported after installation
+      - name: Test package import
+        run: |
+          python -c "import wecom_bot_mcp_server; from wecom_bot_mcp_server import mcp, send_message, send_wecom_file, send_wecom_image; print('All imports successful')"
+
       - name: Run tests
         run: |
           uvx nox -s pytest
