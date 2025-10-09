@@ -279,10 +279,8 @@ async def _process_message_response(response: Any, ctx: Context | None = None) -
 async def send_message_mcp(
     content: str,
     msg_type: str = "markdown",
-    mentioned_list: Annotated[list[str], Field(default_factory=list, description="List of user IDs to mention")] = [],
-    mentioned_mobile_list: Annotated[
-        list[str], Field(default_factory=list, description="List of mobile numbers to mention")
-    ] = [],
+    mentioned_list: Annotated[list[str], Field(description="List of user IDs to mention")] = [],
+    mentioned_mobile_list: Annotated[list[str], Field(description="List of mobile numbers to mention")] = [],
 ) -> dict[str, str]:
     """Send message to WeCom.
 
