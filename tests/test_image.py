@@ -24,7 +24,7 @@ from wecom_bot_mcp_server.image import send_wecom_image
 async def test_send_wecom_image_local(mock_image_send, fs):
     """Test send_wecom_image function with local file."""
     # Unpack fixtures
-    mock_exists, mock_pil_open, mock_notify_bridge, mock_get_webhook_url, mock_nb_instance = mock_image_send
+    _mock_exists, _mock_pil_open, _mock_notify_bridge, _mock_get_webhook_url, mock_nb_instance = mock_image_send
 
     # Create test image file
     fs.create_file("test_image.jpg", contents=b"\x89PNG\r\n\x1a\n")
@@ -135,7 +135,7 @@ async def test_download_image(mock_makedirs, mock_file_open, mock_client_session
 async def test_send_wecom_image_url(mock_image_download, fs):
     """Test send_wecom_image function with URL."""
     # Unpack fixtures
-    mock_exists, mock_pil_open, mock_download = mock_image_download
+    _mock_exists, _mock_pil_open, mock_download = mock_image_download
 
     # Setup additional mocks for NotifyBridge and webhook
     with (
@@ -744,7 +744,7 @@ async def test_send_wecom_image_with_api_error(mock_image_send, fs):
     fs.create_file("/test/image.jpg", contents=b"test image content")
 
     # Unpack fixtures
-    _, _, mock_notify_bridge, _, mock_nb_instance = mock_image_send
+    _, _, _mock_notify_bridge, _, mock_nb_instance = mock_image_send
 
     # Setup mock response with API error
     mock_response = MagicMock()

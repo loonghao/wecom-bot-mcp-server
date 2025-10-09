@@ -82,7 +82,9 @@ def test_imports(session):
     session.run(
         "python",
         "-c",
-        "from wecom_bot_mcp_server import mcp, send_message, send_wecom_file, send_wecom_image, ErrorCode, WeComError, MESSAGE_HISTORY_KEY; print('All public APIs imported successfully')",
+        "from wecom_bot_mcp_server import mcp, send_message, send_wecom_file, "
+        "send_wecom_image, ErrorCode, WeComError, MESSAGE_HISTORY_KEY; "
+        "print('All public APIs imported successfully')",
     )
 
 

@@ -6,6 +6,7 @@ import pytest
 
 def test_package_import():
     """Test that the package can be imported."""
+    # Import local modules
     import wecom_bot_mcp_server
 
     assert wecom_bot_mcp_server is not None
@@ -13,15 +14,14 @@ def test_package_import():
 
 def test_public_api_imports():
     """Test that all public API can be imported."""
-    from wecom_bot_mcp_server import (
-        MESSAGE_HISTORY_KEY,
-        ErrorCode,
-        WeComError,
-        mcp,
-        send_message,
-        send_wecom_file,
-        send_wecom_image,
-    )
+    # Import local modules
+    from wecom_bot_mcp_server import ErrorCode
+    from wecom_bot_mcp_server import MESSAGE_HISTORY_KEY
+    from wecom_bot_mcp_server import WeComError
+    from wecom_bot_mcp_server import mcp
+    from wecom_bot_mcp_server import send_message
+    from wecom_bot_mcp_server import send_wecom_file
+    from wecom_bot_mcp_server import send_wecom_image
 
     # Verify all imports are not None
     assert MESSAGE_HISTORY_KEY is not None
@@ -35,6 +35,7 @@ def test_public_api_imports():
 
 def test_error_code_enum():
     """Test ErrorCode enum values."""
+    # Import local modules
     from wecom_bot_mcp_server import ErrorCode
 
     # Verify ErrorCode has expected values
@@ -47,7 +48,9 @@ def test_error_code_enum():
 
 def test_wecom_error_class():
     """Test WeComError exception class."""
-    from wecom_bot_mcp_server import ErrorCode, WeComError
+    # Import local modules
+    from wecom_bot_mcp_server import ErrorCode
+    from wecom_bot_mcp_server import WeComError
 
     # Create an error instance
     error = WeComError("Test error", ErrorCode.NETWORK_ERROR)
@@ -60,6 +63,7 @@ def test_wecom_error_class():
 
 def test_mcp_app_instance():
     """Test that mcp app instance is properly initialized."""
+    # Import local modules
     from wecom_bot_mcp_server import mcp
 
     # Verify mcp is a FastMCP instance
@@ -71,12 +75,14 @@ def test_mcp_app_instance():
 @pytest.mark.asyncio
 async def test_send_message_signature():
     """Test send_message function signature."""
+    # Import local modules
     from wecom_bot_mcp_server import send_message
 
     # Verify function is callable
     assert callable(send_message)
 
     # Verify function has correct signature
+    # Import built-in modules
     import inspect
 
     sig = inspect.signature(send_message)
@@ -91,12 +97,14 @@ async def test_send_message_signature():
 @pytest.mark.asyncio
 async def test_send_wecom_file_signature():
     """Test send_wecom_file function signature."""
+    # Import local modules
     from wecom_bot_mcp_server import send_wecom_file
 
     # Verify function is callable
     assert callable(send_wecom_file)
 
     # Verify function has correct signature
+    # Import built-in modules
     import inspect
 
     sig = inspect.signature(send_wecom_file)
@@ -109,12 +117,14 @@ async def test_send_wecom_file_signature():
 @pytest.mark.asyncio
 async def test_send_wecom_image_signature():
     """Test send_wecom_image function signature."""
+    # Import local modules
     from wecom_bot_mcp_server import send_wecom_image
 
     # Verify function is callable
     assert callable(send_wecom_image)
 
     # Verify function has correct signature
+    # Import built-in modules
     import inspect
 
     sig = inspect.signature(send_wecom_image)
@@ -126,6 +136,7 @@ async def test_send_wecom_image_signature():
 
 def test_all_exports():
     """Test that __all__ exports match actual exports."""
+    # Import local modules
     import wecom_bot_mcp_server
 
     # Get __all__ list
@@ -140,6 +151,7 @@ def test_version_attribute():
     """Test that version information is available."""
     # Try to import version module
     try:
+        # Import local modules
         from wecom_bot_mcp_server import __version__
 
         assert __version__ is not None
@@ -155,16 +167,15 @@ def test_version_attribute():
 def test_no_import_errors():
     """Test that importing the package doesn't raise any errors."""
     try:
-        import wecom_bot_mcp_server  # noqa: F401
-        from wecom_bot_mcp_server import (  # noqa: F401
-            MESSAGE_HISTORY_KEY,
-            ErrorCode,
-            WeComError,
-            mcp,
-            send_message,
-            send_wecom_file,
-            send_wecom_image,
-        )
+        # Import local modules
+        import wecom_bot_mcp_server
+        from wecom_bot_mcp_server import ErrorCode
+        from wecom_bot_mcp_server import MESSAGE_HISTORY_KEY
+        from wecom_bot_mcp_server import WeComError
+        from wecom_bot_mcp_server import mcp
+        from wecom_bot_mcp_server import send_message
+        from wecom_bot_mcp_server import send_wecom_file
+        from wecom_bot_mcp_server import send_wecom_image
 
         # If we get here, all imports succeeded
         assert True
@@ -174,6 +185,7 @@ def test_no_import_errors():
 
 def test_module_structure():
     """Test that the module has expected structure."""
+    # Import local modules
     import wecom_bot_mcp_server
 
     # Check for expected submodules
@@ -185,4 +197,3 @@ def test_module_structure():
             __import__(full_module_name)
         except ImportError as e:
             pytest.fail(f"Failed to import {full_module_name}: {e}")
-
