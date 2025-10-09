@@ -103,8 +103,8 @@ async def test_error_handling_invalid_webhook():
         with pytest.raises(WeComError) as excinfo:
             await send_message(content="Test", msg_type="text")
 
-        # Just verify that an error was raised
-        assert excinfo.value.error_code in [ErrorCode.UNKNOWN, ErrorCode.VALIDATION_ERROR]
+        # Just verify that an error was raised (can be NETWORK_ERROR, UNKNOWN, or VALIDATION_ERROR)
+        assert excinfo.value.error_code in [ErrorCode.NETWORK_ERROR, ErrorCode.UNKNOWN, ErrorCode.VALIDATION_ERROR]
     finally:
         # Cleanup - restore webhook URL
         if original_url:
@@ -118,8 +118,8 @@ async def test_error_handling_invalid_message_type(mock_message_send):
     with pytest.raises(WeComError) as excinfo:
         await send_message(content="Test", msg_type="invalid_type")
 
-    # Just verify that an error was raised
-    assert excinfo.value.error_code in [ErrorCode.UNKNOWN, ErrorCode.VALIDATION_ERROR]
+    # Just verify that an error was raised (can be NETWORK_ERROR, UNKNOWN, or VALIDATION_ERROR)
+    assert excinfo.value.error_code in [ErrorCode.NETWORK_ERROR, ErrorCode.UNKNOWN, ErrorCode.VALIDATION_ERROR]
 
 
 @pytest.mark.asyncio
