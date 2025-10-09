@@ -55,21 +55,9 @@ npx -y @smithery/cli install wecom-bot-mcp-server --client claude
 3. Search for "Cline: Install Package"
 4. Type "wecom-bot-mcp-server" and press Enter
 
-### 2. Manual Installation
+### 2. Manual Configuration
 
-#### Install from PyPI:
-
-```bash
-# Using pip
-pip install wecom-bot-mcp-server
-
-# Or using uv (recommended for faster installation)
-uv pip install wecom-bot-mcp-server
-```
-
-#### Configure MCP manually:
-
-Create or update your MCP configuration file:
+Add the server to your MCP client configuration file:
 
 ```json
 // For Claude Desktop on macOS: ~/Library/Application Support/Claude/claude_desktop_config.json
@@ -120,84 +108,76 @@ You can customize the log level and file path using environment variables:
 
 ## Usage
 
-### Starting the Server
+Once configured, the MCP server runs automatically when your MCP client starts. You can interact with it through natural language in your AI assistant.
 
-```bash
-wecom-bot-mcp-server
+### Usage Examples
+
+**Scenario 1: Send weather information to WeCom**
 ```
-
-### Usage Examples (With MCP)
-
-```python
-# Scenario 1: Send weather information to WeCom
 USER: "How's the weather in Shenzhen today? Send it to WeCom"
 ASSISTANT: "I'll check Shenzhen's weather and send it to WeCom"
-
-await mcp.send_message(
-    content="Shenzhen Weather:\n- Temperature: 25°C\n- Weather: Sunny\n- Air Quality: Good",
-    msg_type="markdown"
-)
-
-# Scenario 2: Send meeting reminder and @mention relevant people
-USER: "Send a reminder for the 3 PM project review meeting, remind Zhang San and Li Si to attend"
-ASSISTANT: "I'll send the meeting reminder"
-
-await mcp.send_message(
-    content="## Project Review Meeting Reminder\n\nTime: Today 3:00 PM\nLocation: Meeting Room A\n\nPlease be on time!",
-    msg_type="markdown",
-    mentioned_list=["zhangsan", "lisi"]
-)
-
-# Scenario 3: Send a file
-USER: "Send this weekly report to the WeCom group"
-ASSISTANT: "I'll send the weekly report"
-
-await mcp.send_message(
-    content=Path("weekly_report.docx"),
-    msg_type="file"
-)
+[The assistant will use the send_message tool to send the weather information]
 ```
 
-### Direct API Usage
+**Scenario 2: Send meeting reminder and @mention relevant people**
+```
+USER: "Send a reminder for the 3 PM project review meeting, remind Zhang San and Li Si to attend"
+ASSISTANT: "I'll send the meeting reminder"
+[The assistant will use the send_message tool with mentioned_list parameter]
+```
 
-#### Send Messages
+**Scenario 3: Send a file**
+```
+USER: "Send this weekly report to the WeCom group"
+ASSISTANT: "I'll send the weekly report"
+[The assistant will use the send_file tool]
+```
+
+**Scenario 4: Send an image**
+```
+USER: "Send this chart image to WeCom"
+ASSISTANT: "I'll send the image"
+[The assistant will use the send_image tool]
+```
+
+### Available MCP Tools
+
+The server provides the following tools that your AI assistant can use:
+
+1. **send_message** - Send text or markdown messages
+   - Parameters: `content`, `msg_type` (text/markdown), `mentioned_list`, `mentioned_mobile_list`
+
+2. **send_file** - Send files to WeCom
+   - Parameters: `file_path`
+
+3. **send_image** - Send images to WeCom
+   - Parameters: `image_path` (local path or URL)
+
+### For Developers: Direct API Usage
+
+If you want to use this package directly in your Python code (not as an MCP server):
 
 ```python
-from wecom_bot_mcp_server import mcp
+from wecom_bot_mcp_server import send_message, send_wecom_file, send_wecom_image
 
 # Send markdown message
-await mcp.send_message(
-    content="**Hello World!**", 
+await send_message(
+    content="**Hello World!**",
     msg_type="markdown"
 )
 
 # Send text message and mention users
-await mcp.send_message(
+await send_message(
     content="Hello @user1 @user2",
     msg_type="text",
     mentioned_list=["user1", "user2"]
 )
-```
-
-#### Send Files
-
-```python
-from wecom_bot_mcp_server import send_wecom_file
 
 # Send file
 await send_wecom_file("/path/to/file.txt")
-```
 
-#### Send Images
-
-```python
-from wecom_bot_mcp_server import send_wecom_image
-
-# Send local image
+# Send image
 await send_wecom_image("/path/to/image.png")
-
-# Send URL image
-await send_wecom_image("https://example.com/image.png")
 ```
 
 ## Development

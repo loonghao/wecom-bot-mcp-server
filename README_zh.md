@@ -53,21 +53,9 @@ npx -y @smithery/cli install wecom-bot-mcp-server --client claude
 3. 搜索 "Cline: Install Package"
 4. 输入 "wecom-bot-mcp-server" 并按回车
 
-### 2. 手动安装
+### 2. 手动配置
 
-#### 从 PyPI 安装：
-
-```bash
-# 使用 pip
-pip install wecom-bot-mcp-server
-
-# 或使用 uv（推荐，安装更快）
-uv pip install wecom-bot-mcp-server
-```
-
-#### 手动配置 MCP：
-
-创建或更新 MCP 配置文件：
+将服务器添加到你的 MCP 客户端配置文件中：
 
 ```json
 // Claude Desktop macOS 配置: ~/Library/Application Support/Claude/claude_desktop_config.json
@@ -118,84 +106,76 @@ $env:MCP_LOG_FILE = "path/to/custom/log/file.log"  # 自定义日志文件路径
 
 ## 使用
 
-### 启动服务器
+配置完成后，MCP 服务器会在你的 MCP 客户端启动时自动运行。你可以通过自然语言与 AI 助手交互来使用它。
 
-```bash
-wecom-bot-mcp-server
+### 使用示例
+
+**场景一：发送天气信息到企业微信**
 ```
-
-### 使用示例（在 MCP 环境中）
-
-```python
-# 场景一：发送天气信息到企业微信
 USER: "深圳今天天气怎么样？发送到企业微信"
 ASSISTANT: "我会查询深圳天气并发送到企业微信"
-
-await mcp.send_message(
-    content="深圳天气：\n- 温度：25°C\n- 天气：晴\n- 空气质量：优",
-    msg_type="markdown"
-)
-
-# 场景二：发送会议提醒并@相关人员
-USER: "帮我发送下午3点的项目评审会议提醒，提醒张三和李四参加"
-ASSISTANT: "好的，我来发送会议提醒"
-
-await mcp.send_message(
-    content="## 项目评审会议提醒\n\n时间：今天下午 3:00\n地点：会议室 A\n\n请准时参加！",
-    msg_type="markdown",
-    mentioned_list=["zhangsan", "lisi"]
-)
-
-# 场景三：发送文件
-USER: "把这份周报发送到企业微信群"
-ASSISTANT: "好的，我来发送周报"
-
-await mcp.send_message(
-    content=Path("weekly_report.docx"),
-    msg_type="file"
-)
+[助手将使用 send_message 工具发送天气信息]
 ```
 
-### 直接 API 使用
+**场景二：发送会议提醒并@相关人员**
+```
+USER: "帮我发送下午3点的项目评审会议提醒，提醒张三和李四参加"
+ASSISTANT: "好的，我来发送会议提醒"
+[助手将使用 send_message 工具，并使用 mentioned_list 参数]
+```
 
-#### 发送消息
+**场景三：发送文件**
+```
+USER: "把这份周报发送到企业微信群"
+ASSISTANT: "好的，我来发送周报"
+[助手将使用 send_file 工具]
+```
+
+**场景四：发送图片**
+```
+USER: "把这个图表发送到企业微信"
+ASSISTANT: "好的，我来发送图片"
+[助手将使用 send_image 工具]
+```
+
+### 可用的 MCP 工具
+
+服务器提供以下工具供 AI 助手使用：
+
+1. **send_message** - 发送文本或 Markdown 消息
+   - 参数：`content`、`msg_type`（text/markdown）、`mentioned_list`、`mentioned_mobile_list`
+
+2. **send_file** - 发送文件到企业微信
+   - 参数：`file_path`
+
+3. **send_image** - 发送图片到企业微信
+   - 参数：`image_path`（本地路径或 URL）
+
+### 开发者：直接 API 使用
+
+如果你想在 Python 代码中直接使用此包（而不是作为 MCP 服务器）：
 
 ```python
-from wecom_bot_mcp_server import mcp
+from wecom_bot_mcp_server import send_message, send_wecom_file, send_wecom_image
 
 # 发送 markdown 消息
-await mcp.send_message(
-    content="**Hello World!**", 
+await send_message(
+    content="**Hello World!**",
     msg_type="markdown"
 )
 
 # 发送文本消息并提及用户
-await mcp.send_message(
+await send_message(
     content="Hello @user1 @user2",
     msg_type="text",
     mentioned_list=["user1", "user2"]
 )
-```
-
-#### 发送文件
-
-```python
-from wecom_bot_mcp_server import send_wecom_file
 
 # 发送文件
 await send_wecom_file("/path/to/file.txt")
-```
 
-#### 发送图片
-
-```python
-from wecom_bot_mcp_server import send_wecom_image
-
-# 发送本地图片
+# 发送图片
 await send_wecom_image("/path/to/image.png")
-
-# 发送 URL 图片
-await send_wecom_image("https://example.com/image.png")
 ```
 
 ## 开发
