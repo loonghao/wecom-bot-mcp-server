@@ -6,7 +6,6 @@ pydantic>=2.6.1
 ftfy>=6.3.1
 httpx>=0.28.1
 pillow>=10.2.0
-svglib>=1.5.1
 circuitbreaker>=2.0.0
 tenacity>=9.0.0
 loguru>=0.7.3

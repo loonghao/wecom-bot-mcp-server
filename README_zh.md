@@ -58,7 +58,11 @@ npx -y @smithery/cli install wecom-bot-mcp-server --client claude
 #### 从 PyPI 安装：
 
 ```bash
+# 使用 pip
 pip install wecom-bot-mcp-server
+
+# 或使用 uv（推荐，安装更快）
+uv pip install wecom-bot-mcp-server
 ```
 
 #### 手动配置 MCP：
@@ -66,7 +70,10 @@ pip install wecom-bot-mcp-server
 创建或更新 MCP 配置文件：
 
 ```json
+// Claude Desktop macOS 配置: ~/Library/Application Support/Claude/claude_desktop_config.json
+// Claude Desktop Windows 配置: %APPDATA%\Claude\claude_desktop_config.json
 // Windsurf 配置: ~/.windsurf/config.json
+// VSCode 中的 Cline: VSCode 设置 > Cline > MCP Settings
 {
   "mcpServers": {
     "wecom": {
@@ -99,11 +106,15 @@ $env:MCP_LOG_FILE = "path/to/custom/log/file.log"  # 自定义日志文件路径
 
 日志系统使用 `platformdirs.user_log_dir()` 进行跨平台日志文件管理：
 
-- Windows: `C:\Users\<username>\AppData\Local\hal\wecom-bot-mcp-server`
-- Linux: `~/.local/share/hal/wecom-bot-mcp-server`
-- macOS: `~/Library/Application Support/hal/wecom-bot-mcp-server`
+- Windows: `C:\Users\<username>\AppData\Local\hal\wecom-bot-mcp-server\Logs`
+- Linux: `~/.local/state/hal/wecom-bot-mcp-server/log`
+- macOS: `~/Library/Logs/hal/wecom-bot-mcp-server`
 
 日志文件名为 `mcp_wecom.log`，存储在上述目录中。
+
+你可以使用环境变量自定义日志级别和文件路径：
+- `MCP_LOG_LEVEL`: 设置为 DEBUG、INFO、WARNING、ERROR 或 CRITICAL
+- `MCP_LOG_FILE`: 设置为自定义日志文件路径
 
 ## 使用
 
@@ -213,11 +224,17 @@ pip install -e ".[dev]"
 ### 测试
 
 ```bash
-# 使用 uv (推荐)
+# 运行所有测试并生成覆盖率报告
 uvx nox -s pytest
 
-# 或者使用传统方式
-nox -s pytest
+# 仅运行导入测试
+uvx nox -s test_imports
+
+# 运行特定测试文件
+uvx nox -s pytest -- tests/test_message.py
+
+# 运行测试并显示详细输出
+uvx nox -s pytest -- -v
 ```
 
 ### 代码风格
@@ -234,11 +251,20 @@ uvx nox -s lint_fix
 
 ```bash
 # 构建包
-uv build
+uvx nox -s build
 
-# 构建并发布到 PyPI
-uv build && twine upload dist/*
+# 发布到 PyPI（需要认证）
+uvx nox -s publish
 ```
+
+### 持续集成
+
+项目使用 GitHub Actions 进行 CI/CD：
+- **MR 检查**：在所有 Pull Request 上运行，在 Ubuntu、Windows 和 macOS 上使用 Python 3.10、3.11 和 3.12 进行测试
+- **代码覆盖率**：上传覆盖率报告到 Codecov
+- **导入测试**：确保包在安装后能够正确导入
+
+所有依赖项在 CI 期间自动测试，以便及早发现问题。
 
 ## 项目结构
 
