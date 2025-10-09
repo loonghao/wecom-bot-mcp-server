@@ -3,13 +3,19 @@
 # Import built-in modules
 import os
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock
+from unittest.mock import MagicMock
+from unittest.mock import patch
 
 # Import third-party modules
 import pytest
 
 # Import local modules
-from wecom_bot_mcp_server import ErrorCode, WeComError, send_message, send_wecom_file, send_wecom_image
+from wecom_bot_mcp_server import ErrorCode
+from wecom_bot_mcp_server import WeComError
+from wecom_bot_mcp_server import send_message
+from wecom_bot_mcp_server import send_wecom_file
+from wecom_bot_mcp_server import send_wecom_image
 
 
 @pytest.mark.asyncio
@@ -171,6 +177,7 @@ async def test_multiple_messages_sequence(mock_message_send):
 @pytest.mark.asyncio
 async def test_message_history_tracking(mock_message_send):
     """Test that message history is tracked correctly."""
+    # Import local modules
     from wecom_bot_mcp_server import MESSAGE_HISTORY_KEY
 
     # Verify MESSAGE_HISTORY_KEY is defined
@@ -188,12 +195,11 @@ async def test_message_history_tracking(mock_message_send):
 @pytest.mark.asyncio
 async def test_concurrent_message_sending(mock_message_send):
     """Test sending multiple messages concurrently."""
+    # Import built-in modules
     import asyncio
 
     # Create multiple message tasks
-    tasks = [
-        send_message(content=f"Message {i}", msg_type="text") for i in range(5)
-    ]
+    tasks = [send_message(content=f"Message {i}", msg_type="text") for i in range(5)]
 
     # Execute concurrently
     results = await asyncio.gather(*tasks)
@@ -262,4 +268,3 @@ async def test_markdown_formatting(mock_message_send):
     for content in markdown_contents:
         result = await send_message(content=content, msg_type="markdown")
         assert result["status"] == "success"
-
