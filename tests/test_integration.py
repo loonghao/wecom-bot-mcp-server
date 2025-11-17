@@ -23,7 +23,7 @@ async def test_send_text_message_integration(mock_message_send):
     """Test sending a text message end-to-end."""
     # Setup
     content = "Hello, World!"
-    msg_type = "text"
+    msg_type = "markdown_v2"
 
     # Execute
     result = await send_message(content=content, msg_type=msg_type)
@@ -39,7 +39,7 @@ async def test_send_markdown_message_integration(mock_message_send):
     """Test sending a markdown message end-to-end."""
     # Setup
     content = "## Title\n- Point 1\n- Point 2"
-    msg_type = "markdown"
+    msg_type = "markdown_v2"
 
     # Execute
     result = await send_message(content=content, msg_type=msg_type)
@@ -55,7 +55,7 @@ async def test_send_message_with_mentions_integration(mock_message_send):
     """Test sending a message with user mentions."""
     # Setup
     content = "Hello @user1 @user2"
-    msg_type = "text"
+    msg_type = "markdown_v2"
     mentioned_list = ["user1", "user2"]
 
     # Execute
@@ -107,7 +107,7 @@ async def test_error_handling_invalid_webhook():
     try:
         # Execute and verify
         with pytest.raises(WeComError) as excinfo:
-            await send_message(content="Test", msg_type="text")
+            await send_message(content="Test", msg_type="markdown_v2")
 
         # Just verify that an error was raised (can be NETWORK_ERROR, UNKNOWN, or VALIDATION_ERROR)
         assert excinfo.value.error_code in [ErrorCode.NETWORK_ERROR, ErrorCode.UNKNOWN, ErrorCode.VALIDATION_ERROR]
@@ -157,15 +157,15 @@ async def test_multiple_messages_sequence(mock_message_send):
     results = []
 
     # Send text message
-    result1 = await send_message(content="Message 1", msg_type="text")
+    result1 = await send_message(content="Message 1", msg_type="markdown_v2")
     results.append(result1)
 
     # Send markdown message
-    result2 = await send_message(content="## Message 2", msg_type="markdown")
+    result2 = await send_message(content="## Message 2", msg_type="markdown_v2")
     results.append(result2)
 
     # Send text with mentions
-    result3 = await send_message(content="Message 3", msg_type="text", mentioned_list=["user1"])
+    result3 = await send_message(content="Message 3", msg_type="markdown_v2", mentioned_list=["user1"])
     results.append(result3)
 
     # Verify all succeeded
@@ -186,7 +186,7 @@ async def test_message_history_tracking(mock_message_send):
 
     # Send a message
     content = "Test message for history"
-    result = await send_message(content=content, msg_type="text")
+    result = await send_message(content=content, msg_type="markdown_v2")
 
     # Verify message was sent
     assert result["status"] == "success"
@@ -199,7 +199,7 @@ async def test_concurrent_message_sending(mock_message_send):
     import asyncio
 
     # Create multiple message tasks
-    tasks = [send_message(content=f"Message {i}", msg_type="text") for i in range(5)]
+    tasks = [send_message(content=f"Message {i}", msg_type="markdown_v2") for i in range(5)]
 
     # Execute concurrently
     results = await asyncio.gather(*tasks)
@@ -224,7 +224,7 @@ async def test_special_characters_in_message(mock_message_send):
     ]
 
     for content in special_contents:
-        result = await send_message(content=content, msg_type="text")
+        result = await send_message(content=content, msg_type="markdown_v2")
         assert result["status"] == "success"
 
 
@@ -235,7 +235,7 @@ async def test_long_message_content(mock_message_send):
     long_content = "A" * 1000
 
     # Execute
-    result = await send_message(content=long_content, msg_type="text")
+    result = await send_message(content=long_content, msg_type="markdown_v2")
 
     # Verify
     assert result["status"] == "success"
@@ -245,7 +245,7 @@ async def test_long_message_content(mock_message_send):
 async def test_empty_mentioned_list(mock_message_send):
     """Test sending message with empty mentioned list."""
     # Execute
-    result = await send_message(content="Test", msg_type="text", mentioned_list=[])
+    result = await send_message(content="Test", msg_type="markdown_v2", mentioned_list=[])
 
     # Verify
     assert result["status"] == "success"
@@ -266,5 +266,5 @@ async def test_markdown_formatting(mock_message_send):
     ]
 
     for content in markdown_contents:
-        result = await send_message(content=content, msg_type="markdown")
+        result = await send_message(content=content, msg_type="markdown_v2")
         assert result["status"] == "success"

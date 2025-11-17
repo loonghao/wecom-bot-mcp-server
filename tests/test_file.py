@@ -390,11 +390,11 @@ async def test_send_file_to_wecom_with_context(mock_notify_bridge):
 
     # Check NotifyBridge was called with correct parameters
     mock_nb_instance.send_async.assert_called_once()
-    args = mock_nb_instance.send_async.call_args[0]
+    args, kwargs = mock_nb_instance.send_async.call_args
     assert args[0] == "wecom"
-    assert "base_url" in args[1]
-    assert "file_path" in args[1]
-    assert args[1]["file_path"] == str(file_path.absolute())
+    assert kwargs["webhook_url"] == "https://example.com/webhook"
+    assert kwargs["msg_type"] == "file"
+    assert kwargs["file_path"] == str(file_path.absolute())
 
     # Context methods should not be called in _send_file_to_wecom
     mock_ctx.report_progress.assert_called_once_with(0.7)
