@@ -115,7 +115,7 @@ async def test_prepare_markdown_message(mock_encode_text):
 
     # Assertions
     assert result == "Encoded markdown"
-    mock_encode_text.assert_called_once_with("# Test markdown", "text")
+    mock_encode_text.assert_called_once_with("# Test markdown", "markdown_v2")
 
 
 @pytest.mark.asyncio
@@ -126,11 +126,11 @@ async def test_prepare_explicit_markdown_message(mock_encode_text):
     mock_encode_text.return_value = "Encoded markdown"
 
     # Call function with explicit markdown type
-    result = await _prepare_message_content("# Test markdown", msg_type="markdown")
+    result = await _prepare_message_content("# Test markdown", msg_type="markdown_v2")
 
     # Assertions
     assert result == "Encoded markdown"
-    mock_encode_text.assert_called_once_with("# Test markdown", "markdown")
+    mock_encode_text.assert_called_once_with("# Test markdown", "markdown_v2")
 
 
 @pytest.mark.asyncio
@@ -153,7 +153,7 @@ async def test_send_markdown_message(mock_notify_bridge, mock_get_webhook_url):
     markdown_content = "# Heading\n\n- Item 1\n- Item 2\n\n```code\nprint('hello')\n```"
 
     # Call function
-    result = await send_message(markdown_content, "markdown")
+    result = await send_message(markdown_content, "markdown_v2")
 
     # Assertions
     assert result["status"] == "success"
@@ -161,19 +161,21 @@ async def test_send_markdown_message(mock_notify_bridge, mock_get_webhook_url):
 
     # Verify the message was sent with the correct parameters
     mock_nb_instance.send_async.assert_called_once()
-    call_args = mock_nb_instance.send_async.call_args[0][1]
-    assert call_args["base_url"] == "https://example.com/webhook"
-    assert call_args["msg_type"] == "markdown"
+    args, kwargs = mock_nb_instance.send_async.call_args
+    assert args[0] == "wecom"
+    assert kwargs["webhook_url"] == "https://example.com/webhook"
+    assert kwargs["msg_type"] == "markdown_v2"
 
     # Verify content was properly encoded (not double-escaped)
-    assert "# Heading" in call_args["content"]
-    assert "- Item" in call_args["content"]
-    assert "```code" in call_args["content"]
-    assert "print('hello')" in call_args["content"]
+    content = kwargs["message"]
+    assert "# Heading" in content
+    assert "- Item" in content
+    assert "```code" in content
+    assert "print('hello')" in content
 
     # Markdown should preserve newlines (not escaped as \n)
-    assert "\n" in call_args["content"]
-    assert "\\n" not in call_args["content"]
+    assert "\n" in content
+    assert "\\n" not in content
 
 
 @pytest.mark.asyncio
@@ -203,10 +205,12 @@ async def test_send_markdown_v2_message(mock_notify_bridge, mock_get_webhook_url
 
     # Verify the message was sent with the correct parameters
     mock_nb_instance.send_async.assert_called_once()
-    call_args = mock_nb_instance.send_async.call_args[0][1]
-    assert call_args["base_url"] == "https://example.com/webhook"
-    assert call_args["msg_type"] == "markdown_v2"
+    args, kwargs = mock_nb_instance.send_async.call_args
+    assert args[0] == "wecom"
+    assert kwargs["webhook_url"] == "https://example.com/webhook"
+    assert kwargs["msg_type"] == "markdown_v2"
 
     # Markdown v2 should preserve newlines (not escaped as \n)
-    assert "\n" in call_args["content"]
-    assert "\\n" not in call_args["content"]
+    message = kwargs["message"]
+    assert "\n" in message
+    assert "\\n" not in message
