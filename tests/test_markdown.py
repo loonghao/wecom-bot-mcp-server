@@ -90,8 +90,6 @@ def test_encode_markdown_nested_formatting():
     assert "`code`" in encoded
 
 
-
-
 def test_encode_markdown_v2_preserves_newlines_and_tabs():
     """Test encoding Markdown v2 preserves newlines and tabs."""
     markdown_text = "# Heading\n\nLine 2 with\ttab"
@@ -102,6 +100,7 @@ def test_encode_markdown_v2_preserves_newlines_and_tabs():
     assert "\t" in encoded
     assert "\\n" not in encoded
     assert "\\t" not in encoded
+
 
 @pytest.mark.asyncio
 @patch("wecom_bot_mcp_server.message.encode_text")

@@ -55,7 +55,6 @@ def get_formatted_message_history() -> str:
     return formatted_history
 
 
-
 @mcp.resource(MARKDOWN_CAPABILITIES_RESOURCE_KEY)
 def get_markdown_capabilities_resource() -> str:
     """Resource endpoint describing WeCom markdown capabilities.
@@ -72,7 +71,7 @@ def get_markdown_capabilities_resource() -> str:
         "- Inline code: `code`\n"
         "- Block quotes: > quote\n\n"
         "## Only markdown\n"
-        "- Font colors: <font color=\"info|comment|warning\">text</font>\n"
+        '- Font colors: <font color="info|comment|warning">text</font>\n'
         "- Mentions: <@userid>\n\n"
         "## Only markdown_v2\n"
         "- Tables (using | columns | and separator rows)\n"
@@ -272,10 +271,7 @@ async def _send_message_to_wecom(
     """
     # Validate base_url format again before sending
     if not base_url.startswith("http://") and not base_url.startswith("https://"):
-        error_msg = (
-            f"Invalid webhook URL format: '{base_url}'. "
-            "URL must start with 'http://' or 'https://'"
-        )
+        error_msg = f"Invalid webhook URL format: '{base_url}'. URL must start with 'http://' or 'https://'"
         logger.error(error_msg)
         raise WeComError(error_msg, ErrorCode.VALIDATION_ERROR)
 
@@ -291,10 +287,7 @@ async def _send_message_to_wecom(
                 mentioned_mobile_list=mentioned_mobile_list or [],
             )
     except Exception as e:
-        error_msg = (
-            "Failed to send message via NotifyBridge: "
-            f"{e}. URL: {base_url}, Type: {msg_type}"
-        )
+        error_msg = f"Failed to send message via NotifyBridge: {e}. URL: {base_url}, Type: {msg_type}"
         logger.error(error_msg)
         raise WeComError(error_msg, ErrorCode.NETWORK_ERROR) from e
 
