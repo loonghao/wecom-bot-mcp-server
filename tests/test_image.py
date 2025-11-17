@@ -172,7 +172,7 @@ async def test_send_wecom_image_url(mock_image_download, fs):
             "wecom",
             webhook_url="https://example.com/webhook",
             msg_type="image",
-            image=str(downloaded_path.absolute()),
+            image_path=str(downloaded_path.absolute()),
         )
 
 
@@ -342,7 +342,7 @@ async def test_send_image_to_wecom(fs):
             "wecom",
             webhook_url=base_url,
             msg_type="image",
-            image=str(image_path.absolute()),
+            image_path=str(image_path.absolute()),
         )
 
 
