@@ -64,7 +64,7 @@ def encode_text(text: str, msg_type: str = "text") -> str:
         fixed_text = ftfy.fix_text(text)
 
         # For markdown messages, preserve newlines and tabs
-        if msg_type.lower() == "markdown":
+        if msg_type.lower() in {"markdown", "markdown_v2"}:
             # Only escape backslashes and double quotes, preserve newlines and tabs
             escaped_text = fixed_text.replace("\\", "\\\\").replace('"', '\\"')
             logger.debug("Markdown encoding preserved newlines and tabs")

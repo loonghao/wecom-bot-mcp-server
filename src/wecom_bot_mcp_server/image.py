@@ -208,15 +208,13 @@ async def _send_image_to_wecom(image_path: Path, base_url: str) -> Any:
     """
     logger.info(f"Processing image: {image_path}")
 
-    # Use NotifyBridge to send image directly
+    # Use NotifyBridge to send image directly via the wecom channel
     async with NotifyBridge() as nb:
         response = await nb.send_async(
             "wecom",
-            {
-                "base_url": base_url,
-                "msg_type": "image",
-                "image": str(image_path.absolute()),
-            },
+            webhook_url=base_url,
+            msg_type="image",
+            image=str(image_path.absolute()),
         )
 
         return response
