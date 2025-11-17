@@ -83,7 +83,10 @@ def get_markdown_capabilities_resource() -> str:
         "- If the main content is a standalone image file or screenshot, "
         "send it with the send_wecom_image tool (msg_type=image).\n"
         "- If the image is just an illustration inside a larger report, "
-        "use markdown_v2 and embed it with ![alt](url).\n"
+        "use markdown_v2 and embed it with ![alt](url).\n\n"
+        "## File sending recommendations\n"
+        "- Use the send_wecom_file tool when sending non-image files such as "
+        "reports, logs, or archives.\n"
     )
 
 
@@ -103,6 +106,8 @@ def wecom_message_guidelines() -> str:
         "- Do not request `text` or legacy `markdown` msg_type; they will be rejected as invalid.\n"
         "- If the main content is an image file (local path or URL), "
         "call the `send_wecom_image` tool instead of embedding it in markdown.\n"
+        "- If the user asks to send a non-image file (reports, logs, archives), "
+        "call the `send_wecom_file` tool with the local file path.\n"
         "- URLs must be preserved exactly; do not change underscores or other "
         "characters inside URLs.\n"
     )

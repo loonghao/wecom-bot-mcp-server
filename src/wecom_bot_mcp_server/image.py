@@ -214,7 +214,7 @@ async def _send_image_to_wecom(image_path: Path, base_url: str) -> Any:
             "wecom",
             webhook_url=base_url,
             msg_type="image",
-            image=str(image_path.absolute()),
+            image_path=str(image_path.absolute()),
         )
 
         return response
