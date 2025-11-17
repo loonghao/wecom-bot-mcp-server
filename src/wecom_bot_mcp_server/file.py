@@ -143,15 +143,13 @@ async def _send_file_to_wecom(file_path: Path, base_url: str, ctx: Context | Non
         await ctx.info(f"Sending file: {file_path}")
         await ctx.report_progress(0.7)
 
-    # Use NotifyBridge to send file directly
+    # Use NotifyBridge to send file directly via the wecom channel
     async with NotifyBridge() as nb:
         return await nb.send_async(
             "wecom",
-            {
-                "base_url": base_url,
-                "msg_type": "file",
-                "file_path": str(file_path.absolute()),
-            },
+            webhook_url=base_url,
+            msg_type="file",
+            file_path=str(file_path.absolute()),
         )
 
 

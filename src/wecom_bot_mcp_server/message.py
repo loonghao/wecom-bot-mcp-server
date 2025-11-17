@@ -19,6 +19,7 @@ from wecom_bot_mcp_server.utils import get_webhook_url
 
 # Constants
 MESSAGE_HISTORY_KEY = "history://messages"
+MARKDOWN_CAPABILITIES_RESOURCE_KEY = "wecom://markdown-capabilities"
 
 # Message history storage
 message_history: list[dict[str, str]] = []
@@ -54,9 +55,63 @@ def get_formatted_message_history() -> str:
     return formatted_history
 
 
+
+@mcp.resource(MARKDOWN_CAPABILITIES_RESOURCE_KEY)
+def get_markdown_capabilities_resource() -> str:
+    """Resource endpoint describing WeCom markdown capabilities.
+
+    This can be used by MCP clients or models to decide which message type to use
+    based on the desired formatting (tables, images, colors, mentions, etc.).
+    """
+    return (
+        "# WeCom Markdown Capabilities\n\n"
+        "## Common to markdown and markdown_v2\n"
+        "- Headers (# to ######)\n"
+        "- Bold (**text**) and italic (*text*)\n"
+        "- Links: [text](url)\n"
+        "- Inline code: `code`\n"
+        "- Block quotes: > quote\n\n"
+        "## Only markdown\n"
+        "- Font colors: <font color=\"info|comment|warning\">text</font>\n"
+        "- Mentions: <@userid>\n\n"
+        "## Only markdown_v2\n"
+        "- Tables (using | columns | and separator rows)\n"
+        "- Lists (ordered and unordered)\n"
+        "- Multi-level quotes (>>, >>>)\n"
+        "- Images embedded with ![alt](url)\n"
+        "- Horizontal rules (---)\n\n"
+        "## Image sending recommendations\n"
+        "- If the main content is a standalone image file or screenshot, "
+        "send it with the send_wecom_image tool (msg_type=image).\n"
+        "- If the image is just an illustration inside a larger report, "
+        "use markdown_v2 and embed it with ![alt](url).\n"
+    )
+
+
+@mcp.prompt(title="WeCom Message Guidelines")
+def wecom_message_guidelines() -> str:
+    """High-level guidelines for planning WeCom messages.
+
+    This prompt explains how to use the single supported message type
+    `markdown_v2` and when to call the image/file tools.
+    """
+    return (
+        "When sending messages to WeCom via this MCP server, follow these rules:\n\n"
+        "- This server **only** supports the `markdown_v2` message type.\n"
+        "- For plain text, still use `markdown_v2` but avoid extra formatting.\n"
+        "- For formatted content (headings, bold/italic, links, tables, lists, images, nested quotes), "
+        "also use `markdown_v2`.\n"
+        "- Do not request `text` or legacy `markdown` msg_type; they will be rejected as invalid.\n"
+        "- If the main content is an image file (local path or URL), "
+        "call the `send_wecom_image` tool instead of embedding it in markdown.\n"
+        "- URLs must be preserved exactly; do not change underscores or other "
+        "characters inside URLs.\n"
+    )
+
+
 async def send_message(
     content: str,
-    msg_type: str = "markdown",
+    msg_type: str = "markdown_v2",
     mentioned_list: list[str] | None = None,
     mentioned_mobile_list: list[str] | None = None,
     ctx: Context | None = None,
@@ -65,7 +120,7 @@ async def send_message(
 
     Args:
         content: Message content
-        msg_type: Message type (text, markdown)
+        msg_type: Message type (only 'markdown_v2' is supported); default is markdown_v2
         mentioned_list: List of mentioned users
         mentioned_mobile_list: List of mentioned mobile numbers
         ctx: FastMCP context
@@ -131,9 +186,9 @@ async def _validate_message_inputs(content: str, msg_type: str, ctx: Context | N
             await ctx.error(error_msg)
         raise WeComError(error_msg, ErrorCode.VALIDATION_ERROR)
 
-    # Validate message type
-    if msg_type not in ["text", "markdown"]:
-        error_msg = f"Invalid message type: {msg_type}"
+    # Validate message type - only markdown_v2 is supported now
+    if msg_type != "markdown_v2":
+        error_msg = f"Invalid message type: {msg_type}. Only 'markdown_v2' is supported."
         logger.error(error_msg)
         if ctx:
             await ctx.error(error_msg)
@@ -161,13 +216,13 @@ async def _get_webhook_url(ctx: Context | None = None) -> str:
         raise
 
 
-async def _prepare_message_content(content: str, ctx: Context | None = None, msg_type: str = "text") -> str:
+async def _prepare_message_content(content: str, ctx: Context | None = None, msg_type: str = "markdown_v2") -> str:
     """Prepare message content for sending.
 
     Args:
         content: Message content
         ctx: FastMCP context
-        msg_type: Message type (text, markdown, etc.)
+        msg_type: Message type (only 'markdown_v2' is supported)
 
     Returns:
         str: Encoded message content
@@ -196,6 +251,11 @@ async def _send_message_to_wecom(
 ) -> Any:
     """Send message to WeCom using NotifyBridge.
 
+    This uses the latest NotifyBridge wecom interface, which expects
+    keyword arguments rather than a payload dict. The semantics of
+    ``msg_type`` (currently only "markdown_v2" is supported here)
+    are implemented inside NotifyBridge.
+
     Args:
         base_url: Webhook URL
         msg_type: Message type
@@ -212,25 +272,29 @@ async def _send_message_to_wecom(
     """
     # Validate base_url format again before sending
     if not base_url.startswith("http://") and not base_url.startswith("https://"):
-        error_msg = f"Invalid webhook URL format: '{base_url}'. URL must start with 'http://' or 'https://'"
+        error_msg = (
+            f"Invalid webhook URL format: '{base_url}'. "
+            "URL must start with 'http://' or 'https://'"
+        )
         logger.error(error_msg)
         raise WeComError(error_msg, ErrorCode.VALIDATION_ERROR)
 
-    # Use NotifyBridge to send message
+    # Use NotifyBridge to send message via the wecom channel
     try:
         async with NotifyBridge() as nb:
             return await nb.send_async(
                 "wecom",
-                {
-                    "base_url": base_url,
-                    "msg_type": msg_type,
-                    "content": content,
-                    "mentioned_list": mentioned_list or [],
-                    "mentioned_mobile_list": mentioned_mobile_list or [],
-                },
+                webhook_url=base_url,
+                msg_type=msg_type,
+                message=content,
+                mentioned_list=mentioned_list or [],
+                mentioned_mobile_list=mentioned_mobile_list or [],
             )
     except Exception as e:
-        error_msg = f"Failed to send message via NotifyBridge: {e}. URL: {base_url}, Type: {msg_type}"
+        error_msg = (
+            "Failed to send message via NotifyBridge: "
+            f"{e}. URL: {base_url}, Type: {msg_type}"
+        )
         logger.error(error_msg)
         raise WeComError(error_msg, ErrorCode.NETWORK_ERROR) from e
 
@@ -278,7 +342,7 @@ async def _process_message_response(response: Any, ctx: Context | None = None) -
 @mcp.tool(name="send_message")
 async def send_message_mcp(
     content: str,
-    msg_type: str = "markdown",
+    msg_type: str = "markdown_v2",
     mentioned_list: Annotated[list[str], Field(description="List of user IDs to mention")] = [],
     mentioned_mobile_list: Annotated[list[str], Field(description="List of mobile numbers to mention")] = [],
 ) -> dict[str, str]:
@@ -286,7 +350,7 @@ async def send_message_mcp(
 
     Args:
         content: Message content to send
-        msg_type: Message type (markdown, text, etc.)
+        msg_type: Message type (only 'markdown_v2' is supported)
         mentioned_list: List of user IDs to mention
         mentioned_mobile_list: List of mobile numbers to mention
 

@@ -221,11 +221,9 @@ async def test_send_file_to_wecom(mock_file_send):
     assert result == mock_response
     mock_nb_instance.send_async.assert_called_once_with(
         "wecom",
-        {
-            "base_url": base_url,
-            "msg_type": "file",
-            "file_path": str(file_path.absolute()),
-        },
+        webhook_url=base_url,
+        msg_type="file",
+        file_path=str(file_path.absolute()),
     )
 
 

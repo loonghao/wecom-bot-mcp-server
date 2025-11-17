@@ -17,8 +17,10 @@ from wecom_bot_mcp_server.message import _process_message_response
 from wecom_bot_mcp_server.message import _send_message_to_wecom
 from wecom_bot_mcp_server.message import _validate_message_inputs
 from wecom_bot_mcp_server.message import get_formatted_message_history
+from wecom_bot_mcp_server.message import get_markdown_capabilities_resource
 from wecom_bot_mcp_server.message import get_message_history_resource
 from wecom_bot_mcp_server.message import send_message
+from wecom_bot_mcp_server.message import wecom_message_guidelines
 
 
 @pytest.mark.asyncio
@@ -37,8 +39,8 @@ async def test_send_message(mock_get_webhook_url, mock_notify_bridge):
     mock_nb_instance.send_async.return_value = mock_response
     mock_notify_bridge.return_value.__aenter__.return_value = mock_nb_instance
 
-    # Call function
-    result = await send_message("Test message", "text")
+    # Call function (default msg_type should be markdown_v2)
+    result = await send_message("Test message")
 
     # Assertions
     assert result["status"] == "success"
@@ -47,13 +49,11 @@ async def test_send_message(mock_get_webhook_url, mock_notify_bridge):
     mock_get_webhook_url.assert_called_once()
     mock_nb_instance.send_async.assert_called_once_with(
         "wecom",
-        {
-            "base_url": "https://example.com/webhook",
-            "msg_type": "text",
-            "content": "Test message",
-            "mentioned_list": [],
-            "mentioned_mobile_list": [],
-        },
+        webhook_url="https://example.com/webhook",
+        msg_type="markdown_v2",
+        message="Test message",
+        mentioned_list=[],
+        mentioned_mobile_list=[],
     )
 
 
@@ -64,7 +64,13 @@ async def test_send_message_with_context(mock_notify_bridge, mock_webhook_url):
     mock_ctx = AsyncMock()
 
     # Call function
-    result = await send_message("Test message", "markdown", ["user1", "user2"], ["13800138000"], mock_ctx)
+    result = await send_message(
+        "Test message",
+        "markdown_v2",
+        ["user1", "user2"],
+        ["13800138000"],
+        mock_ctx,
+    )
 
     # Assertions
     assert result["status"] == "success"
@@ -78,9 +84,9 @@ async def test_send_message_with_context(mock_notify_bridge, mock_webhook_url):
 @pytest.mark.asyncio
 async def test_send_message_api_failure(mock_notify_bridge_api_error, mock_webhook_url):
     """Test send_message function with API failure."""
-    # Call function with expected failure
+    # Call function with expected failure (default msg_type is markdown_v2)
     with pytest.raises(WeComError) as exc_info:
-        await send_message("Test message", "markdown")
+        await send_message("Test message")
 
     # Check error message
     assert "WeChat API error" in str(exc_info.value)
@@ -135,19 +141,34 @@ def test_get_message_history_resource(mock_get_formatted_history):
     mock_get_formatted_history.assert_called_once()
 
 
+def test_get_markdown_capabilities_resource():
+    """Test get_markdown_capabilities_resource function."""
+    result = get_markdown_capabilities_resource()
+    assert "WeCom Markdown Capabilities" in result
+    assert "markdown_v2" in result
+    assert "send_wecom_image" in result
+
+
+def test_wecom_message_guidelines_prompt():
+    """Test wecom_message_guidelines prompt content."""
+    prompt_text = wecom_message_guidelines()
+    assert "markdown_v2" in prompt_text
+    assert "send_wecom_image" in prompt_text
+    assert "URLs must be preserved exactly" in prompt_text
+
+
 @pytest.mark.asyncio
 async def test_validate_message_inputs_valid():
     """Test _validate_message_inputs with valid inputs."""
-    # Both of these should not raise exceptions
-    await _validate_message_inputs("Test message", "text")
-    await _validate_message_inputs("Test message", "markdown")
+    # This should not raise an exception for the only supported type
+    await _validate_message_inputs("Test message", "markdown_v2")
 
 
 @pytest.mark.asyncio
 async def test_validate_message_inputs_empty_content():
     """Test _validate_message_inputs with empty content."""
     with pytest.raises(WeComError) as exc_info:
-        await _validate_message_inputs("", "text")
+        await _validate_message_inputs("", "markdown_v2")
 
     assert "Message content cannot be empty" in str(exc_info.value)
 
@@ -197,27 +218,27 @@ async def test_prepare_message_content_success(mock_encode_text):
     # Setup mock
     mock_encode_text.return_value = "Encoded message"
 
-    # Call function
+    # Call function (default msg_type should be markdown_v2)
     result = await _prepare_message_content("Test message")
 
     # Assertions
     assert result == "Encoded message"
-    mock_encode_text.assert_called_once_with("Test message", "text")
+    mock_encode_text.assert_called_once_with("Test message", "markdown_v2")
 
 
 @pytest.mark.asyncio
 @patch("wecom_bot_mcp_server.message.encode_text")
 async def test_prepare_markdown_content_success(mock_encode_text):
-    """Test _prepare_message_content with markdown type."""
+    """Test _prepare_message_content with markdown_v2 type."""
     # Setup mock
     mock_encode_text.return_value = "Encoded markdown"
 
     # Call function
-    result = await _prepare_message_content("# Test markdown", msg_type="markdown")
+    result = await _prepare_message_content("# Test markdown", msg_type="markdown_v2")
 
     # Assertions
     assert result == "Encoded markdown"
-    mock_encode_text.assert_called_once_with("# Test markdown", "markdown")
+    mock_encode_text.assert_called_once_with("# Test markdown", "markdown_v2")
 
 
 @pytest.mark.asyncio
@@ -247,20 +268,18 @@ async def test_send_message_to_wecom(mock_notify_bridge):
 
     # Call function
     result = await _send_message_to_wecom(
-        "https://example.com/webhook", "markdown", "Test message", ["user1"], ["13800138000"]
+        "https://example.com/webhook", "markdown_v2", "Test message", ["user1"], ["13800138000"]
     )
 
     # Assertions
     assert result == mock_response
     mock_nb_instance.send_async.assert_called_once_with(
         "wecom",
-        {
-            "base_url": "https://example.com/webhook",
-            "msg_type": "markdown",
-            "content": "Test message",
-            "mentioned_list": ["user1"],
-            "mentioned_mobile_list": ["13800138000"],
-        },
+        webhook_url="https://example.com/webhook",
+        msg_type="markdown_v2",
+        message="Test message",
+        mentioned_list=["user1"],
+        mentioned_mobile_list=["13800138000"],
     )
 
 
@@ -269,7 +288,7 @@ async def test_send_message_to_wecom_invalid_url():
     """Test _send_message_to_wecom function with invalid URL."""
     # Call function with invalid URL
     with pytest.raises(WeComError) as exc_info:
-        await _send_message_to_wecom("invalid-webhook.example.com", "markdown", "Test message")
+        await _send_message_to_wecom("invalid-webhook.example.com", "markdown_v2", "Test message")
 
     # Check error message
     assert "Invalid webhook URL format" in str(exc_info.value)
@@ -287,13 +306,13 @@ async def test_send_message_to_wecom_exception(mock_notify_bridge):
 
     # Call function
     with pytest.raises(WeComError) as exc_info:
-        await _send_message_to_wecom("https://example.com/webhook", "markdown", "Test message")
+        await _send_message_to_wecom("https://example.com/webhook", "markdown_v2", "Test message")
 
     # Check error message
     assert "Failed to send message via NotifyBridge" in str(exc_info.value)
     assert "Connection error" in str(exc_info.value)
     assert "https://example.com/webhook" in str(exc_info.value)  # Verify the URL is included in the error message
-    assert "markdown" in str(exc_info.value)  # Verify the message type is included in the error message
+    assert "markdown_v2" in str(exc_info.value)  # Verify the message type is included in the error message
 
 
 @pytest.mark.asyncio
@@ -347,9 +366,9 @@ async def test_process_message_response_api_failure():
 @pytest.mark.asyncio
 async def test_send_message_network_error(mock_notify_bridge_network_error, mock_webhook_url):
     """Test send_message with network error."""
-    # Call function with expected exception
+    # Call function with expected exception (default msg_type is markdown_v2)
     with pytest.raises(WeComError) as excinfo:
-        await send_message("Test message", "text", ["user1"], ["13800138000"])
+        await send_message("Test message", mentioned_list=["user1"], mentioned_mobile_list=["13800138000"])
 
     # Assertions
     assert "Failed to send message via NotifyBridge: Network connection failed" in str(excinfo.value)
@@ -361,9 +380,14 @@ async def test_send_message_network_error_with_context(mock_notify_bridge_networ
     # Create mock context
     mock_ctx = AsyncMock()
 
-    # Call function with expected exception
+    # Call function with expected exception (default msg_type is markdown_v2)
     with pytest.raises(WeComError) as excinfo:
-        await send_message("Test message", "text", ["user1"], ["13800138000"], mock_ctx)
+        await send_message(
+            "Test message",
+            mentioned_list=["user1"],
+            mentioned_mobile_list=["13800138000"],
+            ctx=mock_ctx,
+        )
 
     # Assertions
     assert "Failed to send message via NotifyBridge: Network connection failed" in str(excinfo.value)
@@ -378,7 +402,7 @@ async def test_validate_message_inputs_empty_content_with_context():
 
     # Call function with expected exception
     with pytest.raises(WeComError) as excinfo:
-        await _validate_message_inputs("", "text", mock_ctx)
+        await _validate_message_inputs("", "markdown_v2", mock_ctx)
 
     # Assertions
     assert "Message content cannot be empty" in str(excinfo.value)

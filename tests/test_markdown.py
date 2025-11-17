@@ -90,6 +90,19 @@ def test_encode_markdown_nested_formatting():
     assert "`code`" in encoded
 
 
+
+
+def test_encode_markdown_v2_preserves_newlines_and_tabs():
+    """Test encoding Markdown v2 preserves newlines and tabs."""
+    markdown_text = "# Heading\n\nLine 2 with\ttab"
+    encoded = encode_text(markdown_text, "markdown_v2")
+
+    # Newlines and tabs should be preserved (not escaped as \n / \t)
+    assert "\n" in encoded
+    assert "\t" in encoded
+    assert "\\n" not in encoded
+    assert "\\t" not in encoded
+
 @pytest.mark.asyncio
 @patch("wecom_bot_mcp_server.message.encode_text")
 async def test_prepare_markdown_message(mock_encode_text):
@@ -159,5 +172,41 @@ async def test_send_markdown_message(mock_notify_bridge, mock_get_webhook_url):
     assert "print('hello')" in call_args["content"]
 
     # Markdown should preserve newlines (not escaped as \n)
+    assert "\n" in call_args["content"]
+    assert "\\n" not in call_args["content"]
+
+
+@pytest.mark.asyncio
+@patch("wecom_bot_mcp_server.message.get_webhook_url")
+@patch("wecom_bot_mcp_server.message.NotifyBridge")
+async def test_send_markdown_v2_message(mock_notify_bridge, mock_get_webhook_url):
+    """Test sending markdown_v2 message with proper URL."""
+    # Setup mocks
+    mock_get_webhook_url.return_value = "https://example.com/webhook"
+
+    mock_response = MagicMock()
+    mock_response.success = True
+    mock_response.data = {"errcode": 0, "errmsg": "ok"}
+
+    mock_nb_instance = AsyncMock()
+    mock_nb_instance.send_async.return_value = mock_response
+    mock_notify_bridge.return_value.__aenter__.return_value = mock_nb_instance
+
+    markdown_content = "# Heading\n\n- Item 1\n- Item 2\n\n![Alt](https://example.com/image.png)"
+
+    # Call function
+    result = await send_message(markdown_content, "markdown_v2")
+
+    # Assertions
+    assert result["status"] == "success"
+    assert result["message"] == "Message sent successfully"
+
+    # Verify the message was sent with the correct parameters
+    mock_nb_instance.send_async.assert_called_once()
+    call_args = mock_nb_instance.send_async.call_args[0][1]
+    assert call_args["base_url"] == "https://example.com/webhook"
+    assert call_args["msg_type"] == "markdown_v2"
+
+    # Markdown v2 should preserve newlines (not escaped as \n)
     assert "\n" in call_args["content"]
     assert "\\n" not in call_args["content"]
