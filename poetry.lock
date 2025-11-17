@@ -884,14 +884,14 @@ files = [
 
 [[package]]
 name = "notify-bridge"
-version = "0.3.0"
+version = "0.3.1"
 description = "A bridge for sending notifications to various platforms"
 optional = false
 python-versions = ">=3.8"
 groups = ["main"]
 files = [
-    {file = "notify_bridge-0.3.0-py3-none-any.whl", hash = "sha256:b7355fdd5862a2f13d541ce1a8f1a9a1690affa04a20513052c082f18075ea9d"},
-    {file = "notify_bridge-0.3.0.tar.gz", hash = "sha256:6b45fda9eb0d11f62a4079e557844d5c026c876dac15c0286ab9b6512f88e6d5"},
+    {file = "notify_bridge-0.3.1-py3-none-any.whl", hash = "sha256:788c42ea2435ecbcef4cf92f6b8e05bf8b1ceb9bdc033e2254414c5935897343"},
+    {file = "notify_bridge-0.3.1.tar.gz", hash = "sha256:9e8623626c123eaaa116e71c1bef04b0722149087d18abc5c3809f54159cb646"},
 ]
 
 [package.dependencies]
@@ -1958,4 +1958,4 @@ propcache = ">=0.2.0"
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10,<4.0"
-content-hash = "867119b44c1463dc42aa851e3a73a9a73edd174ea8b929d89cb23283f1eaecdc"
+content-hash = "b257a4a61a0cd84c3c09dd73daab1ffe9df9bdbe8a3f8470b07faa64e1956cc9"
