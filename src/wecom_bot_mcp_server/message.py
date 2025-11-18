@@ -378,7 +378,6 @@ async def send_message_mcp(
     )
 
 
-
 async def send_wecom_template_card(
     template_card_type: str,
     *,
@@ -404,6 +403,7 @@ async def send_wecom_template_card(
         All image URLs in template cards (icon_url, image_url, etc.) must be
         HTTP(S) URLs. Local file paths are not supported. If you have a local
         image, please upload it to a public server or CDN first.
+
     """
     if ctx:
         await ctx.report_progress(0.1)
@@ -411,10 +411,7 @@ async def send_wecom_template_card(
 
     valid_types = ("text_notice", "news_notice")
     if template_card_type not in valid_types:
-        error_msg = (
-            f"Invalid template_card_type: {template_card_type}. "
-            f"Allowed values: {', '.join(valid_types)}"
-        )
+        error_msg = f"Invalid template_card_type: {template_card_type}. Allowed values: {', '.join(valid_types)}"
         logger.error(error_msg)
         if ctx:
             await ctx.error(error_msg)
@@ -468,7 +465,7 @@ async def send_wecom_template_card(
             **template_kwargs,
         )
         return await _process_template_card_response(response, ctx)
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         error_msg = f"Error sending template card: {e!s}"
         logger.error(error_msg)
         if ctx:
@@ -490,11 +487,10 @@ async def _send_template_card_to_wecom(
 
     Returns:
         Any: Response from NotifyBridge
+
     """
     if not base_url.startswith("http://") and not base_url.startswith("https://"):
-        error_msg = (
-            f"Invalid webhook URL format: '{base_url}'. URL must start with 'http://' or 'https://'"
-        )
+        error_msg = f"Invalid webhook URL format: '{base_url}'. URL must start with 'http://' or 'https://'"
         logger.error(error_msg)
         raise WeComError(error_msg, ErrorCode.VALIDATION_ERROR)
 
@@ -510,7 +506,7 @@ async def _send_template_card_to_wecom(
                 template_card_type=template_card_type,
                 **template_kwargs,
             )
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         error_msg = (
             f"Failed to send template card via NotifyBridge: {e}. URL: {base_url}, "
             f"template_card_type: {template_card_type}"
@@ -534,6 +530,7 @@ async def _process_template_card_response(
 
     Raises:
         WeComError: If API call fails
+
     """
     if not getattr(response, "success", False):
         error_msg = f"Failed to send template card: {response}"
@@ -633,7 +630,10 @@ async def send_wecom_template_card_news_notice_mcp(
     ],
     template_card_image: Annotated[
         dict[str, Any] | None,
-        Field(description="Main image configuration for the news_notice card. Should contain 'url' and optionally 'aspect_ratio'."),
+        Field(
+            description="Main image configuration for the news_notice card. "
+            "Should contain 'url' and optionally 'aspect_ratio'."
+        ),
     ] = None,
     template_card_image_text_area: Annotated[
         dict[str, Any] | None,
