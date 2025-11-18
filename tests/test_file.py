@@ -2,9 +2,20 @@
 
 # Import built-in modules
 from pathlib import Path
+import sys
 from unittest.mock import AsyncMock
 from unittest.mock import MagicMock
 from unittest.mock import patch
+
+# Ensure we import the local src/wecom_bot_mcp_server package (not an installed one)
+ROOT_DIR = Path(__file__).resolve().parents[1]
+SRC_DIR = ROOT_DIR / "src"
+if str(SRC_DIR) not in sys.path:
+    sys.path.insert(0, str(SRC_DIR))
+
+for name in list(sys.modules):
+    if name == "wecom_bot_mcp_server" or name.startswith("wecom_bot_mcp_server."):
+        del sys.modules[name]
 
 # Import third-party modules
 import pytest
@@ -13,9 +24,12 @@ import pytest
 from wecom_bot_mcp_server.errors import WeComError
 from wecom_bot_mcp_server.file import _get_webhook_url
 from wecom_bot_mcp_server.file import _process_file_response
+from wecom_bot_mcp_server.file import _process_upload_media_response
 from wecom_bot_mcp_server.file import _send_file_to_wecom
+from wecom_bot_mcp_server.file import _upload_media_to_wecom
 from wecom_bot_mcp_server.file import _validate_file
 from wecom_bot_mcp_server.file import send_wecom_file
+from wecom_bot_mcp_server.file import upload_wecom_media
 
 
 @pytest.mark.asyncio
@@ -179,14 +193,13 @@ async def test_get_webhook_url_function(mock_get_webhook_url):
 
 
 @pytest.mark.asyncio
-async def test_get_webhook_url_with_error(mock_get_webhook_url_error):
+async def test_get_webhook_url_with_error():
     """Test _get_webhook_url with error."""
-    # Call function and expect error
-    with pytest.raises(WeComError) as excinfo:
-        await _get_webhook_url()
-
-    # Assertions
-    assert "Webhook URL not found" in str(excinfo.value)
+    # Setup mock
+    with patch("wecom_bot_mcp_server.file.get_webhook_url", side_effect=WeComError("Webhook URL not found")):
+        # Call function and expect error
+        with pytest.raises(WeComError, match="Webhook URL not found"):
+            await _get_webhook_url()
 
 
 @pytest.mark.asyncio
@@ -223,7 +236,7 @@ async def test_send_file_to_wecom(mock_file_send):
         "wecom",
         webhook_url=base_url,
         msg_type="file",
-        file_path=str(file_path.absolute()),
+        media_path=str(file_path.absolute()),
     )
 
 
@@ -351,18 +364,19 @@ async def test_get_webhook_url_with_context(mock_get_webhook_url):
 
 
 @pytest.mark.asyncio
-async def test_get_webhook_url_with_error_and_context(mock_get_webhook_url_error):
+async def test_get_webhook_url_with_error_and_context():
     """Test _get_webhook_url function with error and context."""
     # Create mock context
     mock_ctx = AsyncMock()
 
-    # Call function with expected exception
-    with pytest.raises(WeComError) as excinfo:
-        await _get_webhook_url(mock_ctx)
+    # Setup mock
+    with patch("wecom_bot_mcp_server.file.get_webhook_url", side_effect=WeComError("Webhook URL not found")):
+        # Call function with expected exception
+        with pytest.raises(WeComError, match="Webhook URL not found"):
+            await _get_webhook_url(mock_ctx)
 
-    # Assertions
-    assert "Webhook URL not found" in str(excinfo.value)
-    mock_ctx.error.assert_called_once()
+        # Assertions
+        mock_ctx.error.assert_called_once()
 
 
 @pytest.mark.asyncio
@@ -394,7 +408,7 @@ async def test_send_file_to_wecom_with_context(mock_notify_bridge):
     assert args[0] == "wecom"
     assert kwargs["webhook_url"] == "https://example.com/webhook"
     assert kwargs["msg_type"] == "file"
-    assert kwargs["file_path"] == str(file_path.absolute())
+    assert kwargs["media_path"] == str(file_path.absolute())
 
     # Context methods should not be called in _send_file_to_wecom
     mock_ctx.report_progress.assert_called_once_with(0.7)
@@ -500,3 +514,106 @@ async def test_send_wecom_file_with_context(mock_file_with_context):
     # Verify ctx methods were called
     mock_ctx.report_progress.assert_called()
     mock_ctx.info.assert_called()
+
+
+
+@pytest.mark.asyncio
+async def test_upload_wecom_media_success(mock_file_operations, mock_file_api):
+    """Test upload_wecom_media success path."""
+    # Unpack fixtures to ensure patches are applied
+    _, _, _ = mock_file_operations
+    _mock_notify_bridge, mock_get_webhook_url, mock_nb_instance = mock_file_api
+
+    result = await upload_wecom_media("test_file.txt")
+
+    assert result["status"] == "success"
+    assert result["media_id"] == "test_media_id"
+    assert result["media_type"] == "file"
+    assert result["file_name"] == "test_file.txt"
+    assert result["file_size"] == 1024
+
+    mock_get_webhook_url.assert_called_once()
+    mock_nb_instance.send_async.assert_called_once()
+    args, kwargs = mock_nb_instance.send_async.call_args
+    assert args[0] == "wecom"
+    assert kwargs["msg_type"] == "upload_media"
+    assert kwargs["upload_media_type"] == "file"
+
+
+@pytest.mark.asyncio
+async def test_upload_wecom_media_invalid_type():
+    """upload_wecom_media should validate upload_media_type values."""
+    with pytest.raises(WeComError) as excinfo:
+        await upload_wecom_media("test_file.txt", upload_media_type="invalid")
+
+    assert "Invalid upload_media_type" in str(excinfo.value)
+
+
+@pytest.mark.asyncio
+async def test_upload_wecom_media_network_error(mock_file_network_error):
+    """Test upload_wecom_media with network error and context."""
+    # Unpack fixture to apply patches
+    _, _, _, _, _ = mock_file_network_error
+
+    mock_ctx = AsyncMock()
+
+    with pytest.raises(WeComError) as excinfo:
+        await upload_wecom_media("test_file.txt", ctx=mock_ctx)
+
+    assert "Error uploading media: Network connection failed" in str(excinfo.value)
+    mock_ctx.error.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_process_upload_media_response_success(mock_file_stat):
+    """Test _process_upload_media_response with success response."""
+    # Unpack fixtures so stat is patched
+    _, _ = mock_file_stat
+
+    mock_response = MagicMock()
+    mock_response.success = True
+    mock_response.data = {
+        "errcode": 0,
+        "errmsg": "ok",
+        "media_id": "media123",
+        "type": "file",
+    }
+
+    file_path = Path("test_file.txt")
+
+    result = await _process_upload_media_response(mock_response, file_path, "file")
+
+    assert result["status"] == "success"
+    assert result["media_id"] == "media123"
+    assert result["media_type"] == "file"
+    assert result["file_size"] == 2048
+
+
+@pytest.mark.asyncio
+async def test_process_upload_media_response_api_error():
+    """Test _process_upload_media_response with WeCom API error."""
+    mock_response = MagicMock()
+    mock_response.success = True
+    mock_response.data = {"errcode": 40001, "errmsg": "invalid credential"}
+
+    file_path = Path("test_file.txt")
+
+    with pytest.raises(WeComError) as excinfo:
+        await _process_upload_media_response(mock_response, file_path, "file")
+
+    assert "WeCom upload_media API error: invalid credential" in str(excinfo.value)
+
+
+@pytest.mark.asyncio
+async def test_process_upload_media_response_missing_media_id():
+    """Test _process_upload_media_response when media_id is missing."""
+    mock_response = MagicMock()
+    mock_response.success = True
+    mock_response.data = {"errcode": 0, "errmsg": "ok"}
+
+    file_path = Path("test_file.txt")
+
+    with pytest.raises(WeComError) as excinfo:
+        await _process_upload_media_response(mock_response, file_path, "file")
+
+    assert "did not return media_id" in str(excinfo.value)

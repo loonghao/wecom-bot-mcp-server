@@ -16,8 +16,11 @@ import pytest
 # Import local modules
 from wecom_bot_mcp_server.errors import WeComError
 
-# Add the src directory to the Python path
-sys.path.insert(0, str(Path(__file__).parent.parent))
+# Add the src directory to the Python path so tests use the local package
+ROOT_DIR = Path(__file__).parent.parent
+SRC_DIR = ROOT_DIR / "src"
+if str(SRC_DIR) not in sys.path:
+    sys.path.insert(0, str(SRC_DIR))
 
 
 class AsyncContextManagerMock:
@@ -758,3 +761,27 @@ def setup_env():
     # Clean up
     if "WECOM_WEBHOOK_URL" in os.environ:
         del os.environ["WECOM_WEBHOOK_URL"]
+
+
+@pytest.fixture(autouse=True)
+def clear_message_history():
+    """Clear message history before each test."""
+    from wecom_bot_mcp_server import message
+
+    # Clear message history before test
+    message.message_history.clear()
+    yield
+    # Clear message history after test
+    message.message_history.clear()
+
+
+@pytest.fixture(autouse=True)
+def clear_lru_cache():
+    """Clear lru_cache for get_webhook_url before each test."""
+    from wecom_bot_mcp_server.utils import get_webhook_url
+
+    # Clear cache before test
+    get_webhook_url.cache_clear()
+    yield
+    # Clear cache after test
+    get_webhook_url.cache_clear()
