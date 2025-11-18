@@ -1,9 +1,21 @@
 """Tests for message module."""
 
 # Import built-in modules
+from pathlib import Path
+import sys
 from unittest.mock import AsyncMock
 from unittest.mock import MagicMock
 from unittest.mock import patch
+
+# Ensure we import the local src/wecom_bot_mcp_server package (not an installed one)
+ROOT_DIR = Path(__file__).resolve().parents[1]
+SRC_DIR = ROOT_DIR / "src"
+if str(SRC_DIR) not in sys.path:
+    sys.path.insert(0, str(SRC_DIR))
+
+for name in list(sys.modules):
+    if name == "wecom_bot_mcp_server" or name.startswith("wecom_bot_mcp_server."):
+        del sys.modules[name]
 
 # Import third-party modules
 import pytest
@@ -14,12 +26,14 @@ from wecom_bot_mcp_server.errors import WeComError
 from wecom_bot_mcp_server.message import _get_webhook_url
 from wecom_bot_mcp_server.message import _prepare_message_content
 from wecom_bot_mcp_server.message import _process_message_response
+from wecom_bot_mcp_server.message import _process_template_card_response
 from wecom_bot_mcp_server.message import _send_message_to_wecom
 from wecom_bot_mcp_server.message import _validate_message_inputs
 from wecom_bot_mcp_server.message import get_formatted_message_history
 from wecom_bot_mcp_server.message import get_markdown_capabilities_resource
 from wecom_bot_mcp_server.message import get_message_history_resource
 from wecom_bot_mcp_server.message import send_message
+from wecom_bot_mcp_server.message import send_wecom_template_card
 from wecom_bot_mcp_server.message import wecom_message_guidelines
 
 
@@ -91,6 +105,7 @@ async def test_send_message_api_failure(mock_notify_bridge_api_error, mock_webho
     # Check error message
     assert "WeChat API error" in str(exc_info.value)
     assert "invalid credential" in str(exc_info.value)
+
 
 
 @patch("wecom_bot_mcp_server.message.message_history")
@@ -429,7 +444,10 @@ async def test_validate_message_inputs_invalid_type_with_context():
 async def test_get_webhook_url_with_context_and_error(mock_get_webhook_url):
     """Test _get_webhook_url with context and error."""
     # Setup mock to raise WeComError
-    mock_get_webhook_url.side_effect = WeComError("Webhook URL not found", "VALIDATION_ERROR")
+    mock_get_webhook_url.side_effect = WeComError(
+        "Webhook URL not found",
+        ErrorCode.VALIDATION_ERROR,
+    )
 
     # Create mock context
     mock_ctx = AsyncMock()
@@ -455,7 +473,7 @@ async def test_prepare_message_content_with_context_and_error(mock_encode_text):
 
     # Call function with expected exception
     with pytest.raises(WeComError) as excinfo:
-        await _prepare_message_content("Test message", mock_ctx)
+        await _prepare_message_content("Test message", "markdown_v2", mock_ctx)
 
     # Assertions
     assert "Text encoding error: Encoding failed" in str(excinfo.value)
@@ -541,3 +559,115 @@ async def test_send_message_to_wecom_request_failure_with_context(mock_notify_br
     # Assertions
     assert "Failed to send message" in str(excinfo.value)
     mock_ctx.error.assert_called_once()
+
+
+
+@pytest.mark.asyncio
+@patch("wecom_bot_mcp_server.message.NotifyBridge")
+@patch("wecom_bot_mcp_server.message.get_webhook_url")
+async def test_send_wecom_template_card_text_notice_success(
+    mock_get_webhook_url,
+    mock_notify_bridge,
+):
+    """Test send_wecom_template_card for text_notice template."""
+    mock_get_webhook_url.return_value = "https://example.com/webhook"
+
+    mock_response = MagicMock()
+    mock_response.success = True
+    mock_response.data = {"errcode": 0, "errmsg": "ok"}
+
+    mock_nb_instance = AsyncMock()
+    mock_nb_instance.send_async.return_value = mock_response
+    mock_notify_bridge.return_value.__aenter__.return_value = mock_nb_instance
+
+    template_card_source = {"desc": "source"}
+    template_card_main_title = {"title": "Title", "desc": "Desc"}
+    template_card_card_action = {"type": 1, "url": "https://example.com"}
+
+    result = await send_wecom_template_card(
+        template_card_type="text_notice",
+        template_card_source=template_card_source,
+        template_card_main_title=template_card_main_title,
+        template_card_card_action=template_card_card_action,
+    )
+
+    assert result["status"] == "success"
+    mock_get_webhook_url.assert_called_once()
+    mock_nb_instance.send_async.assert_awaited_once_with(
+        "wecom",
+        webhook_url="https://example.com/webhook",
+        msg_type="template_card",
+        template_card_type="text_notice",
+        template_card_source=template_card_source,
+        template_card_main_title=template_card_main_title,
+        template_card_card_action=template_card_card_action,
+    )
+
+
+@pytest.mark.asyncio
+async def test_send_wecom_template_card_invalid_type():
+    """send_wecom_template_card should validate template_card_type."""
+    with pytest.raises(WeComError) as exc_info:
+        await send_wecom_template_card(
+            template_card_type="invalid",
+            template_card_source={"desc": "source"},
+            template_card_main_title={"title": "Title"},
+            template_card_card_action={"type": 1},
+        )
+
+    assert "Invalid template_card_type" in str(exc_info.value)
+    assert exc_info.value.error_code == ErrorCode.VALIDATION_ERROR
+
+
+@pytest.mark.asyncio
+async def test_send_wecom_template_card_missing_required_fields():
+    """send_wecom_template_card should validate required fields."""
+    with pytest.raises(WeComError) as exc_info:
+        await send_wecom_template_card(
+            template_card_type="text_notice",
+            template_card_source=None,
+            template_card_main_title={"title": "Title"},
+            template_card_card_action={"type": 1},
+        )
+
+    assert "Missing required template card fields" in str(exc_info.value)
+    assert exc_info.value.error_code == ErrorCode.VALIDATION_ERROR
+
+
+@pytest.mark.asyncio
+async def test_process_template_card_response_success():
+    """Test _process_template_card_response with success."""
+    mock_response = MagicMock()
+    mock_response.success = True
+    mock_response.data = {"errcode": 0, "errmsg": "ok"}
+
+    result = await _process_template_card_response(mock_response)
+
+    assert result["status"] == "success"
+    assert result["message"] == "Template card sent successfully"
+
+
+@pytest.mark.asyncio
+async def test_process_template_card_response_request_failure():
+    """Test _process_template_card_response with request failure."""
+    mock_response = MagicMock()
+    mock_response.success = False
+
+    with pytest.raises(WeComError) as exc_info:
+        await _process_template_card_response(mock_response)
+
+    assert "Failed to send template card" in str(exc_info.value)
+
+
+@pytest.mark.asyncio
+async def test_process_template_card_response_api_failure():
+    """Test _process_template_card_response with API failure."""
+    mock_response = MagicMock()
+    mock_response.success = True
+    mock_response.data = {"errcode": 40001, "errmsg": "invalid card"}
+
+    with pytest.raises(WeComError) as exc_info:
+        await _process_template_card_response(mock_response)
+
+    assert "WeChat API error" in str(exc_info.value)
+    assert "invalid card" in str(exc_info.value)
