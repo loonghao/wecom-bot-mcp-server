@@ -18,23 +18,23 @@ for name in list(sys.modules):
         del sys.modules[name]
 
 # Import third-party modules
-import pytest
+import pytest  # noqa: E402
 
 # Import local modules
-from wecom_bot_mcp_server.errors import ErrorCode
-from wecom_bot_mcp_server.errors import WeComError
-from wecom_bot_mcp_server.message import _get_webhook_url
-from wecom_bot_mcp_server.message import _prepare_message_content
-from wecom_bot_mcp_server.message import _process_message_response
-from wecom_bot_mcp_server.message import _process_template_card_response
-from wecom_bot_mcp_server.message import _send_message_to_wecom
-from wecom_bot_mcp_server.message import _validate_message_inputs
-from wecom_bot_mcp_server.message import get_formatted_message_history
-from wecom_bot_mcp_server.message import get_markdown_capabilities_resource
-from wecom_bot_mcp_server.message import get_message_history_resource
-from wecom_bot_mcp_server.message import send_message
-from wecom_bot_mcp_server.message import send_wecom_template_card
-from wecom_bot_mcp_server.message import wecom_message_guidelines
+from wecom_bot_mcp_server.errors import ErrorCode  # noqa: E402
+from wecom_bot_mcp_server.errors import WeComError  # noqa: E402
+from wecom_bot_mcp_server.message import _get_webhook_url  # noqa: E402
+from wecom_bot_mcp_server.message import _prepare_message_content  # noqa: E402
+from wecom_bot_mcp_server.message import _process_message_response  # noqa: E402
+from wecom_bot_mcp_server.message import _process_template_card_response  # noqa: E402
+from wecom_bot_mcp_server.message import _send_message_to_wecom  # noqa: E402
+from wecom_bot_mcp_server.message import _validate_message_inputs  # noqa: E402
+from wecom_bot_mcp_server.message import get_formatted_message_history  # noqa: E402
+from wecom_bot_mcp_server.message import get_markdown_capabilities_resource  # noqa: E402
+from wecom_bot_mcp_server.message import get_message_history_resource  # noqa: E402
+from wecom_bot_mcp_server.message import send_message  # noqa: E402
+from wecom_bot_mcp_server.message import send_wecom_template_card  # noqa: E402
+from wecom_bot_mcp_server.message import wecom_message_guidelines  # noqa: E402
 
 
 @pytest.mark.asyncio
@@ -105,7 +105,6 @@ async def test_send_message_api_failure(mock_notify_bridge_api_error, mock_webho
     # Check error message
     assert "WeChat API error" in str(exc_info.value)
     assert "invalid credential" in str(exc_info.value)
-
 
 
 @patch("wecom_bot_mcp_server.message.message_history")
@@ -559,7 +558,6 @@ async def test_send_message_to_wecom_request_failure_with_context(mock_notify_br
     # Assertions
     assert "Failed to send message" in str(excinfo.value)
     mock_ctx.error.assert_called_once()
-
 
 
 @pytest.mark.asyncio

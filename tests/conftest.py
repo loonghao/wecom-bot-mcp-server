@@ -766,6 +766,7 @@ def setup_env():
 @pytest.fixture(autouse=True)
 def clear_message_history():
     """Clear message history before each test."""
+    # Import local modules
     from wecom_bot_mcp_server import message
 
     # Clear message history before test
@@ -778,6 +779,7 @@ def clear_message_history():
 @pytest.fixture(autouse=True)
 def clear_lru_cache():
     """Clear lru_cache for get_webhook_url before each test."""
+    # Import local modules
     from wecom_bot_mcp_server.utils import get_webhook_url
 
     # Clear cache before test
