@@ -1,3 +1,13 @@
+## v0.8.0 (2025-11-19)
+
+### Feat
+
+- add template card tools and remove upload_wecom_media
+
+### Refactor
+
+- remove image hosting feature
+
 ## v0.7.0 (2025-11-17)
 
 ### Feat
