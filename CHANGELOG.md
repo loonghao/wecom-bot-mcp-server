@@ -1,3 +1,9 @@
+## v0.8.2 (2025-11-28)
+
+### Fix
+
+- require notify-bridge>=0.6.1 for proper content parameter handling
+
 ## v0.8.1 (2025-11-28)
 
 ### Fix
