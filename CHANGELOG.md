@@ -1,3 +1,9 @@
+## v0.8.3 (2025-11-28)
+
+### Fix
+
+- update notify-bridge to >=0.6.1 in all dependency files
+
 ## v0.8.2 (2025-11-28)
 
 ### Fix
