@@ -1211,14 +1211,14 @@ files = [
 
 [[package]]
 name = "notify-bridge"
-version = "0.6.1"
+version = "0.6.2"
 description = "A bridge for sending notifications to various platforms"
 optional = false
 python-versions = ">=3.8"
 groups = ["main"]
 files = [
-    {file = "notify_bridge-0.6.1-py3-none-any.whl", hash = "sha256:fb4057bfd6a2312cc270156b177fc28eadafcf29b4ef6d256e4a958226c52a52"},
-    {file = "notify_bridge-0.6.1.tar.gz", hash = "sha256:f63bd51c2338e681f195ba595325ffe51303ff34760d22832900df63e1f46caf"},
+    {file = "notify_bridge-0.6.2-py3-none-any.whl", hash = "sha256:174000b74449aff5729638e1e3f4770a1bc2c79f56b883534ef57573fc8cf967"},
+    {file = "notify_bridge-0.6.2.tar.gz", hash = "sha256:f425394902d8a62dc166efe4fd7a2cc36571d42db1a54bced6499c6ceb2da726"},
 ]
 
 [package.dependencies]
