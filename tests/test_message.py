@@ -65,7 +65,7 @@ async def test_send_message(mock_get_webhook_url, mock_notify_bridge):
         "wecom",
         webhook_url="https://example.com/webhook",
         msg_type="markdown_v2",
-        message="Test message",
+        content="Test message",
         mentioned_list=[],
         mentioned_mobile_list=[],
     )
@@ -291,7 +291,7 @@ async def test_send_message_to_wecom(mock_notify_bridge):
         "wecom",
         webhook_url="https://example.com/webhook",
         msg_type="markdown_v2",
-        message="Test message",
+        content="Test message",
         mentioned_list=["user1"],
         mentioned_mobile_list=["13800138000"],
     )
