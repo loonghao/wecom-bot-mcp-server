@@ -1,3 +1,9 @@
+## v0.8.1 (2025-11-28)
+
+### Fix
+
+- use correct 'content' parameter for notify-bridge wecom API
+
 ## v0.8.0 (2025-11-19)
 
 ### Feat
