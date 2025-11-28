@@ -297,7 +297,7 @@ async def _send_message_to_wecom(
                 "wecom",
                 webhook_url=base_url,
                 msg_type=msg_type,
-                message=content,
+                content=content,
                 mentioned_list=mentioned_list or [],
                 mentioned_mobile_list=mentioned_mobile_list or [],
             )
