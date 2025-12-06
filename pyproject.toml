@@ -28,7 +28,7 @@ loguru = ">=0.7.3"
 aiohttp = ">=3.11.13"
 
 [tool.poetry.group.dev.dependencies]
-pytest = "^8.0.0"
+pytest = "^9.0.0"
 pytest-cov = "^6.0.0"
 pytest-asyncio = "^1.0.0"
 mypy = "^1.5.1"
