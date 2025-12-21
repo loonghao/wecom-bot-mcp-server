@@ -33,7 +33,7 @@ pytest-cov = "^6.0.0"
 pytest-asyncio = "^1.0.0"
 mypy = "^1.5.1"
 ruff = "^0.12.0"
-pyfakefs = "^5.8.0"
+pyfakefs = "^6.0.0"
 
 [tool.poetry.scripts]
 wecom-bot-mcp-server = "wecom_bot_mcp_server.server:main"
