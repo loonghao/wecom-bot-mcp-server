@@ -207,8 +207,10 @@ class TestMultiBotInstructions:
     def test_no_bots_instructions(self, clean_env):
         """Test instructions when no bots configured."""
         # Clear the global registry
-        from wecom_bot_mcp_server.bot_config import _bot_registry
+        # Import local modules
         import wecom_bot_mcp_server.bot_config as bc
+        from wecom_bot_mcp_server.bot_config import _bot_registry
+
         bc._bot_registry = None
 
         instructions = get_multi_bot_instructions()
@@ -216,7 +218,9 @@ class TestMultiBotInstructions:
 
     def test_single_bot_instructions(self, clean_env):
         """Test instructions with single bot."""
+        # Import local modules
         import wecom_bot_mcp_server.bot_config as bc
+
         bc._bot_registry = None
 
         os.environ["WECOM_WEBHOOK_URL"] = "https://example.com/default"
@@ -225,7 +229,9 @@ class TestMultiBotInstructions:
 
     def test_multiple_bots_instructions(self, clean_env):
         """Test instructions with multiple bots."""
+        # Import local modules
         import wecom_bot_mcp_server.bot_config as bc
+
         bc._bot_registry = None
 
         os.environ["WECOM_WEBHOOK_URL"] = "https://example.com/default"
@@ -255,7 +261,9 @@ class TestListAvailableBots:
 
     def test_list_available_bots(self, clean_env):
         """Test listing available bots."""
+        # Import local modules
         import wecom_bot_mcp_server.bot_config as bc
+
         bc._bot_registry = None
 
         os.environ["WECOM_WEBHOOK_URL"] = "https://example.com/default"

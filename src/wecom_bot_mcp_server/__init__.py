@@ -16,9 +16,9 @@ from wecom_bot_mcp_server.message import send_message
 from wecom_bot_mcp_server.message import send_wecom_template_card
 
 __all__ = [
+    "MESSAGE_HISTORY_KEY",
     "BotConfig",
     "BotRegistry",
-    "MESSAGE_HISTORY_KEY",
     "ErrorCode",
     "WeComError",
     "__version__",
