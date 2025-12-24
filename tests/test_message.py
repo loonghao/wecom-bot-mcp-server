@@ -39,11 +39,13 @@ from wecom_bot_mcp_server.message import wecom_message_guidelines  # noqa: E402
 
 @pytest.mark.asyncio
 @patch("wecom_bot_mcp_server.message.NotifyBridge")
-@patch("wecom_bot_mcp_server.message.get_webhook_url")
-async def test_send_message(mock_get_webhook_url, mock_notify_bridge):
+@patch("wecom_bot_mcp_server.message.get_bot_registry")
+async def test_send_message(mock_get_bot_registry, mock_notify_bridge):
     """Test send_message function."""
     # Setup mocks
-    mock_get_webhook_url.return_value = "https://example.com/webhook"
+    mock_registry = MagicMock()
+    mock_registry.get_webhook_url.return_value = "https://example.com/webhook"
+    mock_get_bot_registry.return_value = mock_registry
 
     mock_response = MagicMock()
     mock_response.success = True
@@ -60,7 +62,7 @@ async def test_send_message(mock_get_webhook_url, mock_notify_bridge):
     assert result["status"] == "success"
     assert result["message"] == "Message sent successfully"
 
-    mock_get_webhook_url.assert_called_once()
+    mock_registry.get_webhook_url.assert_called_once()
     mock_nb_instance.send_async.assert_called_once_with(
         "wecom",
         webhook_url="https://example.com/webhook",
@@ -73,11 +75,13 @@ async def test_send_message(mock_get_webhook_url, mock_notify_bridge):
 
 @pytest.mark.asyncio
 @patch("wecom_bot_mcp_server.message.NotifyBridge")
-@patch("wecom_bot_mcp_server.message.get_webhook_url")
-async def test_send_message_with_markdown_type(mock_get_webhook_url, mock_notify_bridge):
+@patch("wecom_bot_mcp_server.message.get_bot_registry")
+async def test_send_message_with_markdown_type(mock_get_bot_registry, mock_notify_bridge):
     """Test send_message function with markdown type for @mentions."""
     # Setup mocks
-    mock_get_webhook_url.return_value = "https://example.com/webhook"
+    mock_registry = MagicMock()
+    mock_registry.get_webhook_url.return_value = "https://example.com/webhook"
+    mock_get_bot_registry.return_value = mock_registry
 
     mock_response = MagicMock()
     mock_response.success = True
@@ -94,7 +98,7 @@ async def test_send_message_with_markdown_type(mock_get_webhook_url, mock_notify
     assert result["status"] == "success"
     assert result["message"] == "Message sent successfully"
 
-    mock_get_webhook_url.assert_called_once()
+    mock_registry.get_webhook_url.assert_called_once()
     mock_nb_instance.send_async.assert_called_once_with(
         "wecom",
         webhook_url="https://example.com/webhook",
@@ -106,8 +110,23 @@ async def test_send_message_with_markdown_type(mock_get_webhook_url, mock_notify
 
 
 @pytest.mark.asyncio
-async def test_send_message_with_context(mock_notify_bridge, mock_webhook_url):
+@patch("wecom_bot_mcp_server.message.NotifyBridge")
+@patch("wecom_bot_mcp_server.message.get_bot_registry")
+async def test_send_message_with_context(mock_get_bot_registry, mock_notify_bridge):
     """Test send_message function with context."""
+    # Setup mocks
+    mock_registry = MagicMock()
+    mock_registry.get_webhook_url.return_value = "https://example.com/webhook"
+    mock_get_bot_registry.return_value = mock_registry
+
+    mock_response = MagicMock()
+    mock_response.success = True
+    mock_response.data = {"errcode": 0, "errmsg": "ok"}
+
+    mock_nb_instance = AsyncMock()
+    mock_nb_instance.send_async.return_value = mock_response
+    mock_notify_bridge.return_value.__aenter__.return_value = mock_nb_instance
+
     # Create mock context
     mock_ctx = AsyncMock()
 
@@ -117,7 +136,7 @@ async def test_send_message_with_context(mock_notify_bridge, mock_webhook_url):
         "markdown_v2",
         ["user1", "user2"],
         ["13800138000"],
-        mock_ctx,
+        ctx=mock_ctx,
     )
 
     # Assertions
@@ -130,8 +149,23 @@ async def test_send_message_with_context(mock_notify_bridge, mock_webhook_url):
 
 
 @pytest.mark.asyncio
-async def test_send_message_api_failure(mock_notify_bridge_api_error, mock_webhook_url):
+@patch("wecom_bot_mcp_server.message.NotifyBridge")
+@patch("wecom_bot_mcp_server.message.get_bot_registry")
+async def test_send_message_api_failure(mock_get_bot_registry, mock_notify_bridge):
     """Test send_message function with API failure."""
+    # Setup mocks
+    mock_registry = MagicMock()
+    mock_registry.get_webhook_url.return_value = "https://example.com/webhook"
+    mock_get_bot_registry.return_value = mock_registry
+
+    mock_response = MagicMock()
+    mock_response.success = True
+    mock_response.data = {"errcode": 40001, "errmsg": "invalid credential"}
+
+    mock_nb_instance = AsyncMock()
+    mock_nb_instance.send_async.return_value = mock_response
+    mock_notify_bridge.return_value.__aenter__.return_value = mock_nb_instance
+
     # Call function with expected failure (default msg_type is markdown_v2)
     with pytest.raises(WeComError) as exc_info:
         await send_message("Test message")
@@ -232,32 +266,38 @@ async def test_validate_message_inputs_invalid_type():
 
 
 @pytest.mark.asyncio
-@patch("wecom_bot_mcp_server.message.get_webhook_url")
-async def test_get_webhook_url_success(mock_get_webhook_url):
+@patch("wecom_bot_mcp_server.message.get_bot_registry")
+async def test_get_webhook_url_success(mock_get_bot_registry):
     """Test _get_webhook_url with success."""
     # Setup mock
     expected_url = "https://example.com/webhook"
-    mock_get_webhook_url.return_value = expected_url
+    mock_registry = MagicMock()
+    mock_registry.get_webhook_url.return_value = expected_url
+    mock_get_bot_registry.return_value = mock_registry
 
     # Call function
     result = await _get_webhook_url()
 
     # Assertions
     assert result == expected_url
-    mock_get_webhook_url.assert_called_once()
+    mock_registry.get_webhook_url.assert_called_once()
 
 
 @pytest.mark.asyncio
-async def test_get_webhook_url_failure():
+@patch("wecom_bot_mcp_server.message.get_bot_registry")
+async def test_get_webhook_url_failure(mock_get_bot_registry):
     """Test _get_webhook_url with failure."""
     # Setup mock
-    with patch("wecom_bot_mcp_server.message.get_webhook_url", side_effect=WeComError("URL not found")):
-        # Call function with expected failure
-        with pytest.raises(WeComError) as exc_info:
-            await _get_webhook_url()
+    mock_registry = MagicMock()
+    mock_registry.get_webhook_url.side_effect = WeComError("URL not found")
+    mock_get_bot_registry.return_value = mock_registry
 
-        # Check error message
-        assert "URL not found" in str(exc_info.value)
+    # Call function with expected failure
+    with pytest.raises(WeComError) as exc_info:
+        await _get_webhook_url()
+
+    # Check error message
+    assert "URL not found" in str(exc_info.value)
 
 
 @pytest.mark.asyncio
@@ -413,8 +453,19 @@ async def test_process_message_response_api_failure():
 
 
 @pytest.mark.asyncio
-async def test_send_message_network_error(mock_notify_bridge_network_error, mock_webhook_url):
+@patch("wecom_bot_mcp_server.message.NotifyBridge")
+@patch("wecom_bot_mcp_server.message.get_bot_registry")
+async def test_send_message_network_error(mock_get_bot_registry, mock_notify_bridge):
     """Test send_message with network error."""
+    # Setup mocks
+    mock_registry = MagicMock()
+    mock_registry.get_webhook_url.return_value = "https://example.com/webhook"
+    mock_get_bot_registry.return_value = mock_registry
+
+    mock_nb_instance = AsyncMock()
+    mock_nb_instance.send_async.side_effect = Exception("Network connection failed")
+    mock_notify_bridge.return_value.__aenter__.return_value = mock_nb_instance
+
     # Call function with expected exception (default msg_type is markdown_v2)
     with pytest.raises(WeComError) as excinfo:
         await send_message("Test message", mentioned_list=["user1"], mentioned_mobile_list=["13800138000"])
@@ -424,8 +475,19 @@ async def test_send_message_network_error(mock_notify_bridge_network_error, mock
 
 
 @pytest.mark.asyncio
-async def test_send_message_network_error_with_context(mock_notify_bridge_network_error, mock_webhook_url):
+@patch("wecom_bot_mcp_server.message.NotifyBridge")
+@patch("wecom_bot_mcp_server.message.get_bot_registry")
+async def test_send_message_network_error_with_context(mock_get_bot_registry, mock_notify_bridge):
     """Test send_message with network error and context."""
+    # Setup mocks
+    mock_registry = MagicMock()
+    mock_registry.get_webhook_url.return_value = "https://example.com/webhook"
+    mock_get_bot_registry.return_value = mock_registry
+
+    mock_nb_instance = AsyncMock()
+    mock_nb_instance.send_async.side_effect = Exception("Network connection failed")
+    mock_notify_bridge.return_value.__aenter__.return_value = mock_nb_instance
+
     # Create mock context
     mock_ctx = AsyncMock()
 
@@ -474,21 +536,23 @@ async def test_validate_message_inputs_invalid_type_with_context():
 
 
 @pytest.mark.asyncio
-@patch("wecom_bot_mcp_server.message.get_webhook_url")
-async def test_get_webhook_url_with_context_and_error(mock_get_webhook_url):
+@patch("wecom_bot_mcp_server.message.get_bot_registry")
+async def test_get_webhook_url_with_context_and_error(mock_get_bot_registry):
     """Test _get_webhook_url with context and error."""
     # Setup mock to raise WeComError
-    mock_get_webhook_url.side_effect = WeComError(
+    mock_registry = MagicMock()
+    mock_registry.get_webhook_url.side_effect = WeComError(
         "Webhook URL not found",
         ErrorCode.VALIDATION_ERROR,
     )
+    mock_get_bot_registry.return_value = mock_registry
 
     # Create mock context
     mock_ctx = AsyncMock()
 
     # Call function with expected exception
     with pytest.raises(WeComError) as excinfo:
-        await _get_webhook_url(mock_ctx)
+        await _get_webhook_url(ctx=mock_ctx)
 
     # Assertions
     assert "Webhook URL not found" in str(excinfo.value)
@@ -558,11 +622,13 @@ async def test_process_message_response_with_context():
 
 
 @pytest.mark.asyncio
-@patch("wecom_bot_mcp_server.message.get_webhook_url")
-async def test_send_message_general_exception(mock_get_webhook_url):
+@patch("wecom_bot_mcp_server.message.get_bot_registry")
+async def test_send_message_general_exception(mock_get_bot_registry):
     """Test send_message function with a general exception."""
     # Setup mock to raise a general exception
-    mock_get_webhook_url.side_effect = RuntimeError("Unexpected error")
+    mock_registry = MagicMock()
+    mock_registry.get_webhook_url.side_effect = RuntimeError("Unexpected error")
+    mock_get_bot_registry.return_value = mock_registry
 
     # Call function
     with pytest.raises(WeComError) as exc_info:
@@ -597,13 +663,15 @@ async def test_send_message_to_wecom_request_failure_with_context(mock_notify_br
 
 @pytest.mark.asyncio
 @patch("wecom_bot_mcp_server.message.NotifyBridge")
-@patch("wecom_bot_mcp_server.message.get_webhook_url")
+@patch("wecom_bot_mcp_server.message.get_bot_registry")
 async def test_send_wecom_template_card_text_notice_success(
-    mock_get_webhook_url,
+    mock_get_bot_registry,
     mock_notify_bridge,
 ):
     """Test send_wecom_template_card for text_notice template."""
-    mock_get_webhook_url.return_value = "https://example.com/webhook"
+    mock_registry = MagicMock()
+    mock_registry.get_webhook_url.return_value = "https://example.com/webhook"
+    mock_get_bot_registry.return_value = mock_registry
 
     mock_response = MagicMock()
     mock_response.success = True
@@ -625,7 +693,7 @@ async def test_send_wecom_template_card_text_notice_success(
     )
 
     assert result["status"] == "success"
-    mock_get_webhook_url.assert_called_once()
+    mock_registry.get_webhook_url.assert_called_once()
     mock_nb_instance.send_async.assert_awaited_once_with(
         "wecom",
         webhook_url="https://example.com/webhook",

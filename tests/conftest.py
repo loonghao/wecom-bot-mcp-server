@@ -254,14 +254,18 @@ def mock_notify_bridge_network_error_with_context():
 
 @pytest.fixture
 def mock_webhook_url():
-    """Fixture for mocking get_webhook_url function."""
+    """Fixture for mocking get_bot_registry function."""
     with (
-        patch("wecom_bot_mcp_server.message.get_webhook_url") as message_mock,
-        patch("wecom_bot_mcp_server.image.get_webhook_url") as image_mock,
+        patch("wecom_bot_mcp_server.message.get_bot_registry") as message_mock,
+        patch("wecom_bot_mcp_server.image.get_bot_registry") as image_mock,
     ):
-        # Setup both mocks to return the same URL
-        message_mock.return_value = "https://example.com/webhook"
-        image_mock.return_value = "https://example.com/webhook"
+        # Setup mock registry
+        mock_registry = MagicMock()
+        mock_registry.get_webhook_url.return_value = "https://example.com/webhook"
+
+        # Setup both mocks to return the same registry
+        message_mock.return_value = mock_registry
+        image_mock.return_value = mock_registry
 
         yield "https://example.com/webhook"
 
@@ -617,12 +621,16 @@ def mock_image_send():
         patch("wecom_bot_mcp_server.image.Path.exists") as mock_exists,
         patch("wecom_bot_mcp_server.image.Image.open") as mock_image_open,
         patch("wecom_bot_mcp_server.image.NotifyBridge") as mock_notify_bridge,
-        patch("wecom_bot_mcp_server.image.get_webhook_url") as mock_get_webhook_url,
+        patch("wecom_bot_mcp_server.image.get_bot_registry") as mock_get_bot_registry,
     ):
         # Setup mocks
         mock_exists.return_value = True
         mock_image_open.return_value = MagicMock()
-        mock_get_webhook_url.return_value = "https://example.com/webhook"
+
+        # Setup mock registry
+        mock_registry = MagicMock()
+        mock_registry.get_webhook_url.return_value = "https://example.com/webhook"
+        mock_get_bot_registry.return_value = mock_registry
 
         # Setup NotifyBridge mock with proper response object
         mock_nb_instance = AsyncMock()
@@ -632,7 +640,7 @@ def mock_image_send():
         mock_nb_instance.send_async.return_value = mock_response
         mock_notify_bridge.return_value.__aenter__.return_value = mock_nb_instance
 
-        yield mock_exists, mock_image_open, mock_notify_bridge, mock_get_webhook_url, mock_nb_instance
+        yield mock_exists, mock_image_open, mock_notify_bridge, mock_get_bot_registry, mock_nb_instance
 
 
 @pytest.fixture
@@ -685,20 +693,24 @@ def mock_image_network_error():
     with (
         patch("wecom_bot_mcp_server.image.Path.exists") as mock_exists,
         patch("wecom_bot_mcp_server.image.Image.open") as mock_image_open,
-        patch("wecom_bot_mcp_server.image.get_webhook_url") as mock_get_webhook_url,
+        patch("wecom_bot_mcp_server.image.get_bot_registry") as mock_get_bot_registry,
         patch("wecom_bot_mcp_server.image.NotifyBridge") as mock_notify_bridge,
     ):
         # Setup mocks
         mock_exists.return_value = True
         mock_image_open.return_value = MagicMock()
-        mock_get_webhook_url.return_value = "https://example.com/webhook"
+
+        # Setup mock registry
+        mock_registry = MagicMock()
+        mock_registry.get_webhook_url.return_value = "https://example.com/webhook"
+        mock_get_bot_registry.return_value = mock_registry
 
         # Setup NotifyBridge to raise an exception
         mock_nb_instance = AsyncMock()
         mock_nb_instance.send_async.side_effect = Exception("Network connection failed")
         mock_notify_bridge.return_value.__aenter__.return_value = mock_nb_instance
 
-        yield mock_exists, mock_image_open, mock_get_webhook_url, mock_notify_bridge, mock_nb_instance
+        yield mock_exists, mock_image_open, mock_get_bot_registry, mock_notify_bridge, mock_nb_instance
 
 
 @pytest.fixture
@@ -708,12 +720,16 @@ def mock_image_with_context():
         patch("wecom_bot_mcp_server.image.Path.exists") as mock_exists,
         patch("wecom_bot_mcp_server.image.Image.open") as mock_image_open,
         patch("wecom_bot_mcp_server.image.NotifyBridge") as mock_notify_bridge,
-        patch("wecom_bot_mcp_server.image.get_webhook_url") as mock_get_webhook_url,
+        patch("wecom_bot_mcp_server.image.get_bot_registry") as mock_get_bot_registry,
     ):
         # Setup mocks
         mock_exists.return_value = True
         mock_image_open.return_value = MagicMock()
-        mock_get_webhook_url.return_value = "https://example.com/webhook"
+
+        # Setup mock registry
+        mock_registry = MagicMock()
+        mock_registry.get_webhook_url.return_value = "https://example.com/webhook"
+        mock_get_bot_registry.return_value = mock_registry
 
         # Setup NotifyBridge mock
         mock_nb_instance = AsyncMock()
@@ -726,7 +742,7 @@ def mock_image_with_context():
         # Create mock context
         mock_ctx = AsyncMock()
 
-        yield mock_exists, mock_image_open, mock_notify_bridge, mock_get_webhook_url, mock_nb_instance, mock_ctx
+        yield mock_exists, mock_image_open, mock_notify_bridge, mock_get_bot_registry, mock_nb_instance, mock_ctx
 
 
 @pytest.fixture
@@ -734,10 +750,12 @@ def mock_message_send():
     """Fixture for mocking message send operations."""
     with (
         patch("wecom_bot_mcp_server.message.NotifyBridge") as mock_notify_bridge,
-        patch("wecom_bot_mcp_server.message.get_webhook_url") as mock_get_webhook_url,
+        patch("wecom_bot_mcp_server.message.get_bot_registry") as mock_get_bot_registry,
     ):
-        # Setup webhook URL
-        mock_get_webhook_url.return_value = "https://example.com/webhook"
+        # Setup mock registry
+        mock_registry = MagicMock()
+        mock_registry.get_webhook_url.return_value = "https://example.com/webhook"
+        mock_get_bot_registry.return_value = mock_registry
 
         # Setup NotifyBridge response
         mock_response = MagicMock()
@@ -749,7 +767,7 @@ def mock_message_send():
         mock_nb_instance.send_async.return_value = mock_response
         mock_notify_bridge.return_value.__aenter__.return_value = mock_nb_instance
 
-        yield mock_notify_bridge, mock_get_webhook_url, mock_nb_instance
+        yield mock_notify_bridge, mock_get_bot_registry, mock_nb_instance
 
 
 @pytest.fixture(autouse=True)

@@ -209,7 +209,6 @@ class TestMultiBotInstructions:
         # Clear the global registry
         # Import local modules
         import wecom_bot_mcp_server.bot_config as bc
-        from wecom_bot_mcp_server.bot_config import _bot_registry
 
         bc._bot_registry = None
 
@@ -221,9 +220,10 @@ class TestMultiBotInstructions:
         # Import local modules
         import wecom_bot_mcp_server.bot_config as bc
 
+        # Set env var BEFORE resetting registry
+        os.environ["WECOM_WEBHOOK_URL"] = "https://example.com/default"
         bc._bot_registry = None
 
-        os.environ["WECOM_WEBHOOK_URL"] = "https://example.com/default"
         instructions = get_multi_bot_instructions()
         assert "One WeCom bot is configured" in instructions
 
@@ -232,10 +232,11 @@ class TestMultiBotInstructions:
         # Import local modules
         import wecom_bot_mcp_server.bot_config as bc
 
-        bc._bot_registry = None
-
+        # Set env vars BEFORE resetting registry
         os.environ["WECOM_WEBHOOK_URL"] = "https://example.com/default"
         os.environ["WECOM_BOT_ALERT_URL"] = "https://example.com/alert"
+        bc._bot_registry = None
+
         instructions = get_multi_bot_instructions()
         assert "Multiple WeCom Bots Available" in instructions
         assert "bot_id" in instructions
@@ -264,10 +265,10 @@ class TestListAvailableBots:
         # Import local modules
         import wecom_bot_mcp_server.bot_config as bc
 
-        bc._bot_registry = None
-
+        # Set env vars BEFORE resetting registry
         os.environ["WECOM_WEBHOOK_URL"] = "https://example.com/default"
         os.environ["WECOM_BOT_ALERT_URL"] = "https://example.com/alert"
+        bc._bot_registry = None
 
         bots = list_available_bots()
         assert len(bots) == 2
