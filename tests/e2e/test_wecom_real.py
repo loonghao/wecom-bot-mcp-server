@@ -11,8 +11,8 @@ In CI, configure WECOM_WEBHOOK_URL as a secret environment variable.
 """
 
 # Import built-in modules
-import os
 from datetime import datetime
+import os
 
 # Import third-party modules
 import pytest

@@ -8,9 +8,9 @@ For actual message sending tests, see test_wecom_real.py.
 """
 
 # Import third-party modules
-import pytest
 from mcp.client.session import ClientSession
 from mcp.types import TextContent
+import pytest
 
 
 @pytest.mark.anyio
