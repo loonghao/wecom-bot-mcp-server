@@ -1,3 +1,9 @@
+## v0.10.0 (2025-12-24)
+
+### Feat
+
+- add environment variables to control logging behavior
+
 ## v0.9.0 (2025-12-24)
 
 ### Feat
