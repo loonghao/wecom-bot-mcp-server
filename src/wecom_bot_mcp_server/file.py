@@ -2,28 +2,32 @@
 
 # Import built-in modules
 from pathlib import Path
+from typing import Annotated
 from typing import Any
 
 # Import third-party modules
 from loguru import logger
 from mcp.server.fastmcp import Context
 from notify_bridge import NotifyBridge
+from pydantic import Field
 
 # Import local modules
 from wecom_bot_mcp_server.app import mcp
+from wecom_bot_mcp_server.bot_config import get_bot_registry
 from wecom_bot_mcp_server.errors import ErrorCode
 from wecom_bot_mcp_server.errors import WeComError
-from wecom_bot_mcp_server.utils import get_webhook_url
 
 
 async def send_wecom_file(
     file_path: str,
+    bot_id: str | None = None,
     ctx: Context | None = None,
 ) -> dict[str, Any]:
     """Send file to WeCom.
 
     Args:
         file_path: Path to file
+        bot_id: Bot identifier for multi-bot setups. If None, uses the default bot.
         ctx: FastMCP context
 
     Returns:
@@ -35,12 +39,12 @@ async def send_wecom_file(
     """
     if ctx:
         await ctx.report_progress(0.1)
-        await ctx.info(f"Processing file: {file_path}")
+        await ctx.info(f"Processing file: {file_path}" + (f" via bot '{bot_id}'" if bot_id else ""))
 
     try:
         # Validate file and get webhook URL
         file_path_p = await _validate_file(file_path, ctx)
-        base_url = await _get_webhook_url(ctx)
+        base_url = await _get_webhook_url(bot_id, ctx)
 
         # Send file to WeCom
         if ctx:
@@ -100,10 +104,11 @@ async def _validate_file(file_path: str | Path, ctx: Context | None = None) -> P
     return file_path
 
 
-async def _get_webhook_url(ctx: Context | None = None) -> str:
-    """Get webhook URL.
+async def _get_webhook_url(bot_id: str | None = None, ctx: Context | None = None) -> str:
+    """Get webhook URL for a specific bot.
 
     Args:
+        bot_id: Bot identifier. If None, uses the default bot.
         ctx: FastMCP context
 
     Returns:
@@ -118,7 +123,7 @@ async def _get_webhook_url(ctx: Context | None = None) -> str:
         await ctx.info("Getting webhook URL")
 
     try:
-        return get_webhook_url()
+        return get_bot_registry().get_webhook_url(bot_id)
     except WeComError as e:
         if ctx:
             await ctx.error(str(e))
@@ -208,12 +213,22 @@ async def _process_file_response(response: Any, file_path: Path, ctx: Context | 
 
 @mcp.tool(name="send_wecom_file")
 async def send_wecom_file_mcp(
-    file_path: str,
+    file_path: Annotated[str, Field(description="Path to the file to send")],
+    bot_id: Annotated[
+        str | None,
+        Field(
+            description=(
+                "Bot identifier for multi-bot setups. If not specified, uses the default bot. "
+                "Use `list_wecom_bots` tool to see available bots."
+            )
+        ),
+    ] = None,
 ) -> dict[str, Any]:
     """Send file to WeCom.
 
     Args:
         file_path: Path to the file to send
+        bot_id: Bot identifier for multi-bot setups. If None, uses the default bot.
 
     Returns:
         dict: Response with file information and status
@@ -222,4 +237,4 @@ async def send_wecom_file_mcp(
         WeComError: If file sending fails
 
     """
-    return await send_wecom_file(file_path=file_path, ctx=None)
+    return await send_wecom_file(file_path=file_path, bot_id=bot_id, ctx=None)

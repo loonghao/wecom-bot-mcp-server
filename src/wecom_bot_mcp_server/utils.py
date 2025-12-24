@@ -17,6 +17,9 @@ from wecom_bot_mcp_server.errors import WeComError
 def get_webhook_url() -> str:
     """Get WeCom webhook URL from environment variable.
 
+    This function maintains backward compatibility. For multi-bot support,
+    use `get_webhook_url_for_bot()` from `bot_config` module.
+
     Returns:
         str: WeCom webhook URL
 
@@ -37,6 +40,29 @@ def get_webhook_url() -> str:
         )
 
     return webhook_url
+
+
+def get_webhook_url_for_bot(bot_id: str | None = None) -> str:
+    """Get webhook URL for a specific bot.
+
+    This function supports multi-bot configuration while maintaining
+    backward compatibility with single-bot setups.
+
+    Args:
+        bot_id: Bot identifier. If None or empty, returns the default bot's URL.
+            For single-bot setups, this parameter is ignored.
+
+    Returns:
+        str: The webhook URL for the specified bot
+
+    Raises:
+        WeComError: If bot is not found or no bots are configured
+
+    """
+    # Import here to avoid circular imports
+    from wecom_bot_mcp_server.bot_config import get_bot_registry
+
+    return get_bot_registry().get_webhook_url(bot_id)
 
 
 def encode_text(text: str, msg_type: str = "text") -> str:
