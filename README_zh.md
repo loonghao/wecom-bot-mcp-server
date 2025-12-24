@@ -23,6 +23,7 @@
   - Markdown 消息
   - 图片消息（base64）
   - 文件消息
+- **多机器人支持**：配置和使用多个企业微信机器人
 - 支持@用户（通过用户ID或手机号）
 - 消息历史记录
 - 可配置的日志系统
@@ -81,6 +82,8 @@ npx -y @smithery/cli install wecom-bot-mcp-server --client claude
 
 ### 设置环境变量
 
+#### 单机器人（默认）
+
 ```bash
 # Windows PowerShell
 $env:WECOM_WEBHOOK_URL = "your-webhook-url"
@@ -88,6 +91,55 @@ $env:WECOM_WEBHOOK_URL = "your-webhook-url"
 # 可选配置
 $env:MCP_LOG_LEVEL = "DEBUG"  # 日志级别：DEBUG, INFO, WARNING, ERROR, CRITICAL
 $env:MCP_LOG_FILE = "path/to/custom/log/file.log"  # 自定义日志文件路径
+```
+
+#### 多机器人配置
+
+你可以使用以下任一方式配置多个机器人：
+
+**方式 1：JSON 配置（推荐）**
+
+```bash
+# Windows PowerShell
+$env:WECOM_BOTS = '{"alert": {"name": "告警机器人", "webhook_url": "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=xxx", "description": "用于告警通知"}, "ci": {"name": "CI机器人", "webhook_url": "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=yyy", "description": "用于CI/CD通知"}}'
+
+# Linux/macOS
+export WECOM_BOTS='{"alert": {"name": "告警机器人", "webhook_url": "https://...", "description": "用于告警通知"}, "ci": {"name": "CI机器人", "webhook_url": "https://...", "description": "用于CI/CD通知"}}'
+```
+
+**方式 2：独立环境变量**
+
+```bash
+# Windows PowerShell
+$env:WECOM_BOT_ALERT_URL = "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=xxx"
+$env:WECOM_BOT_CI_URL = "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=yyy"
+$env:WECOM_BOT_NOTIFY_URL = "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=zzz"
+```
+
+**方式 3：混合模式**
+
+```bash
+# WECOM_WEBHOOK_URL 成为 "default" 机器人
+$env:WECOM_WEBHOOK_URL = "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=default"
+# 额外的机器人
+$env:WECOM_BOT_ALERT_URL = "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=alert"
+```
+
+#### 多机器人 MCP 客户端配置
+
+```json
+{
+  "mcpServers": {
+    "wecom": {
+      "command": "uvx",
+      "args": ["wecom-bot-mcp-server"],
+      "env": {
+        "WECOM_WEBHOOK_URL": "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=default",
+        "WECOM_BOTS": "{\"alert\": {\"name\": \"告警机器人\", \"webhook_url\": \"https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=alert\"}, \"ci\": {\"name\": \"CI机器人\", \"webhook_url\": \"https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=ci\"}}"
+      }
+    }
+  }
+}
 ```
 
 ### 日志管理
@@ -143,13 +195,39 @@ ASSISTANT: "好的，我来发送图片"
 服务器提供以下工具供 AI 助手使用：
 
 1. **send_message** - 发送文本或 Markdown 消息
-   - 参数：`content`、`msg_type`（text/markdown）、`mentioned_list`、`mentioned_mobile_list`
+   - 参数：`content`、`msg_type`（text/markdown）、`mentioned_list`、`mentioned_mobile_list`、`bot_id`
 
 2. **send_file** - 发送文件到企业微信
-   - 参数：`file_path`
+   - 参数：`file_path`、`bot_id`
 
 3. **send_image** - 发送图片到企业微信
-   - 参数：`image_path`（本地路径或 URL）
+   - 参数：`image_path`（本地路径或 URL）、`bot_id`
+
+4. **list_wecom_bots** - 列出所有已配置的机器人
+   - 返回：可用机器人列表，包含 ID、名称和描述
+
+### 多机器人使用示例
+
+**场景五：发送告警到指定机器人**
+```
+USER: "发送一条紧急告警到告警机器人：服务器 CPU 使用率超过 90%"
+ASSISTANT: "好的，我会发送告警到告警机器人"
+[助手将使用 send_message 并设置 bot_id="alert"]
+```
+
+**场景六：列出可用机器人**
+```
+USER: "有哪些企业微信机器人可用？"
+ASSISTANT: "让我查看可用的机器人"
+[助手将使用 list_wecom_bots 工具]
+```
+
+**场景七：发送 CI 通知**
+```
+USER: "发送构建成功通知到 CI 机器人"
+ASSISTANT: "好的，我会发送通知到 CI 机器人"
+[助手将使用 send_message 并设置 bot_id="ci"]
+```
 
 ### 开发者：直接 API 使用
 
@@ -158,7 +236,7 @@ ASSISTANT: "好的，我来发送图片"
 ```python
 from wecom_bot_mcp_server import send_message, send_wecom_file, send_wecom_image
 
-# 发送 markdown 消息
+# 发送 markdown 消息（使用默认机器人）
 await send_message(
     content="**Hello World!**",
     msg_type="markdown"
@@ -171,11 +249,44 @@ await send_message(
     mentioned_list=["user1", "user2"]
 )
 
-# 发送文件
-await send_wecom_file("/path/to/file.txt")
+# 发送消息到指定机器人
+await send_message(
+    content="构建成功完成！",
+    msg_type="markdown",
+    bot_id="ci"  # 发送到 CI 机器人
+)
 
-# 发送图片
-await send_wecom_image("/path/to/image.png")
+# 发送告警到告警机器人
+await send_message(
+    content="⚠️ 检测到高 CPU 使用率！",
+    msg_type="markdown",
+    bot_id="alert"
+)
+
+# 发送文件到指定机器人
+await send_wecom_file("/path/to/file.txt", bot_id="ci")
+
+# 发送图片到指定机器人
+await send_wecom_image("/path/to/image.png", bot_id="alert")
+```
+
+### 代码中的多机器人配置
+
+```python
+from wecom_bot_mcp_server.bot_config import get_bot_registry, list_available_bots
+
+# 列出所有可用机器人
+bots = list_available_bots()
+for bot in bots:
+    print(f"机器人: {bot['id']} - {bot['name']}")
+
+# 检查特定机器人是否存在
+registry = get_bot_registry()
+if registry.has_bot("alert"):
+    print("告警机器人已配置")
+
+# 获取特定机器人的 webhook URL
+url = registry.get_webhook_url("ci")
 ```
 
 ## 开发
@@ -257,6 +368,7 @@ wecom-bot-mcp-server/
 │       ├── message.py
 │       ├── file.py
 │       ├── image.py
+│       ├── bot_config.py   # 多机器人配置
 │       ├── utils.py
 │       └── errors.py
 ├── tests/

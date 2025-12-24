@@ -13,10 +13,12 @@ from pydantic import Field
 
 # Import local modules
 from wecom_bot_mcp_server.app import mcp
+from wecom_bot_mcp_server.bot_config import get_bot_registry
+from wecom_bot_mcp_server.bot_config import get_multi_bot_instructions
+from wecom_bot_mcp_server.bot_config import list_available_bots
 from wecom_bot_mcp_server.errors import ErrorCode
 from wecom_bot_mcp_server.errors import WeComError
 from wecom_bot_mcp_server.utils import encode_text
-from wecom_bot_mcp_server.utils import get_webhook_url
 
 # Type alias for message types
 MessageType = Literal["markdown", "markdown_v2"]
@@ -24,6 +26,7 @@ MessageType = Literal["markdown", "markdown_v2"]
 # Constants
 MESSAGE_HISTORY_KEY = "history://messages"
 MARKDOWN_CAPABILITIES_RESOURCE_KEY = "wecom://markdown-capabilities"
+MULTI_BOT_INSTRUCTIONS_KEY = "wecom://multi-bot-instructions"
 
 # Message history storage
 message_history: list[dict[str, str]] = []
@@ -38,6 +41,17 @@ def get_message_history_resource() -> str:
 
     """
     return get_formatted_message_history()
+
+
+@mcp.resource(MULTI_BOT_INSTRUCTIONS_KEY)
+def get_multi_bot_instructions_resource() -> str:
+    """Resource endpoint providing multi-bot usage instructions.
+
+    Returns:
+        str: Instructions for using multiple bots
+
+    """
+    return get_multi_bot_instructions()
 
 
 def get_formatted_message_history() -> str:
@@ -117,9 +131,9 @@ def wecom_message_guidelines() -> str:
     """High-level guidelines for planning WeCom messages.
 
     This prompt explains how to choose between `markdown` and `markdown_v2`
-    message types and when to call the image/file tools.
+    message types, when to call the image/file tools, and how to use multiple bots.
     """
-    return (
+    base_guidelines = (
         "When sending messages to WeCom via this MCP server, follow these rules:\n\n"
         "## Message Type Selection (IMPORTANT)\n"
         "This server supports two markdown message types. Choose based on content:\n\n"
@@ -152,8 +166,13 @@ def wecom_message_guidelines() -> str:
         "- It is safe to pass local file/image paths to these tools; this server will call NotifyBridge "
         "to upload the file to WeCom so recipients can access it.\n"
         "- URLs must be preserved exactly; do not change underscores or other "
-        "characters inside URLs.\n"
+        "characters inside URLs.\n\n"
     )
+
+    # Add multi-bot instructions
+    multi_bot_info = get_multi_bot_instructions()
+
+    return base_guidelines + multi_bot_info
 
 
 async def send_message(
@@ -161,6 +180,7 @@ async def send_message(
     msg_type: str = "markdown_v2",
     mentioned_list: list[str] | None = None,
     mentioned_mobile_list: list[str] | None = None,
+    bot_id: str | None = None,
     ctx: Context | None = None,
 ) -> dict[str, str]:
     """Send message to WeCom.
@@ -172,6 +192,7 @@ async def send_message(
             - 'markdown_v2': Use for tables, lists, embedded images, or general content (default)
         mentioned_list: List of mentioned users
         mentioned_mobile_list: List of mentioned mobile numbers
+        bot_id: Bot identifier for multi-bot setups. If None, uses the default bot.
         ctx: FastMCP context
 
     Returns:
@@ -183,14 +204,14 @@ async def send_message(
     """
     if ctx:
         await ctx.report_progress(0.1)
-        await ctx.info(f"Sending {msg_type} message")
+        await ctx.info(f"Sending {msg_type} message" + (f" via bot '{bot_id}'" if bot_id else ""))
 
     try:
         # Validate inputs
         await _validate_message_inputs(content, msg_type, ctx)
 
-        # Get webhook URL and prepare message
-        base_url = await _get_webhook_url(ctx)
+        # Get webhook URL for the specified bot
+        base_url = await _get_webhook_url(bot_id, ctx)
 
         fixed_content = await _prepare_message_content(content, msg_type, ctx)
 
@@ -246,10 +267,11 @@ async def _validate_message_inputs(content: str, msg_type: str, ctx: Context | N
         raise WeComError(error_msg, ErrorCode.VALIDATION_ERROR)
 
 
-async def _get_webhook_url(ctx: Context | None = None) -> str:
-    """Get webhook URL.
+async def _get_webhook_url(bot_id: str | None = None, ctx: Context | None = None) -> str:
+    """Get webhook URL for a specific bot.
 
     Args:
+        bot_id: Bot identifier. If None, uses the default bot.
         ctx: FastMCP context
 
     Returns:
@@ -260,7 +282,7 @@ async def _get_webhook_url(ctx: Context | None = None) -> str:
 
     """
     try:
-        return get_webhook_url()
+        return get_bot_registry().get_webhook_url(bot_id)
     except WeComError as e:
         if ctx:
             await ctx.error(str(e))
@@ -402,6 +424,16 @@ async def send_message_mcp(
     ] = "markdown_v2",
     mentioned_list: Annotated[list[str], Field(description="List of user IDs to mention")] = [],
     mentioned_mobile_list: Annotated[list[str], Field(description="List of mobile numbers to mention")] = [],
+    bot_id: Annotated[
+        str | None,
+        Field(
+            description=(
+                "Bot identifier for multi-bot setups. If not specified, uses the default bot. "
+                "Use `list_wecom_bots` tool to see available bots. "
+                "Example values: 'default', 'alert', 'ci', 'notify'"
+            )
+        ),
+    ] = None,
 ) -> dict[str, str]:
     """Send message to WeCom.
 
@@ -411,6 +443,7 @@ async def send_message_mcp(
             tables, lists, images, or general content.
         mentioned_list: List of user IDs to mention
         mentioned_mobile_list: List of mobile numbers to mention
+        bot_id: Bot identifier for multi-bot setups. If None, uses the default bot.
 
     Returns:
         dict: Response with status and message
@@ -424,6 +457,7 @@ async def send_message_mcp(
         msg_type=msg_type,
         mentioned_list=mentioned_list,
         mentioned_mobile_list=mentioned_mobile_list,
+        bot_id=bot_id,
         ctx=None,
     )
 
@@ -442,6 +476,7 @@ async def send_wecom_template_card(
     template_card_card_action: dict[str, Any] | None = None,
     template_card_image: dict[str, Any] | None = None,
     template_card_image_text_area: dict[str, Any] | None = None,
+    bot_id: str | None = None,
     ctx: Context | None = None,
 ) -> dict[str, str]:
     """Send a WeCom template card message.
@@ -454,10 +489,17 @@ async def send_wecom_template_card(
         HTTP(S) URLs. Local file paths are not supported. If you have a local
         image, please upload it to a public server or CDN first.
 
+    Args:
+        template_card_type: Type of template card ('text_notice' or 'news_notice')
+        bot_id: Bot identifier for multi-bot setups. If None, uses the default bot.
+        ctx: FastMCP context
+        **template_kwargs: Template card configuration fields
+
     """
     if ctx:
         await ctx.report_progress(0.1)
-        await ctx.info(f"Sending template_card ({template_card_type}) message")
+        await ctx.info(f"Sending template_card ({template_card_type}) message" +
+                      (f" via bot '{bot_id}'" if bot_id else ""))
 
     valid_types = ("text_notice", "news_notice")
     if template_card_type not in valid_types:
@@ -481,7 +523,7 @@ async def send_wecom_template_card(
         raise WeComError(error_msg, ErrorCode.VALIDATION_ERROR)
 
     try:
-        base_url = await _get_webhook_url(ctx)
+        base_url = await _get_webhook_url(bot_id, ctx)
 
         if ctx:
             await ctx.report_progress(0.3)
@@ -640,6 +682,15 @@ async def send_wecom_template_card_text_notice_mcp(
         list[dict[str, Any]] | None,
         Field(description="Jump (link) buttons."),
     ] = None,
+    bot_id: Annotated[
+        str | None,
+        Field(
+            description=(
+                "Bot identifier for multi-bot setups. If not specified, uses the default bot. "
+                "Use `list_wecom_bots` tool to see available bots."
+            )
+        ),
+    ] = None,
     ctx: Context | None = None,
 ) -> dict[str, str]:
     """MCP tool wrapper for sending a text_notice template card.
@@ -660,6 +711,7 @@ async def send_wecom_template_card_text_notice_mcp(
         template_card_card_action=template_card_card_action,
         template_card_image=None,
         template_card_image_text_area=None,
+        bot_id=bot_id,
         ctx=ctx,
     )
 
@@ -705,6 +757,15 @@ async def send_wecom_template_card_news_notice_mcp(
         list[dict[str, Any]] | None,
         Field(description="Jump (link) buttons."),
     ] = None,
+    bot_id: Annotated[
+        str | None,
+        Field(
+            description=(
+                "Bot identifier for multi-bot setups. If not specified, uses the default bot. "
+                "Use `list_wecom_bots` tool to see available bots."
+            )
+        ),
+    ] = None,
     ctx: Context | None = None,
 ) -> dict[str, str]:
     """MCP tool wrapper for sending a news_notice template card."""
@@ -721,5 +782,34 @@ async def send_wecom_template_card_news_notice_mcp(
         template_card_card_action=template_card_card_action,
         template_card_image=template_card_image,
         template_card_image_text_area=template_card_image_text_area,
+        bot_id=bot_id,
         ctx=ctx,
     )
+
+
+@mcp.tool(name="list_wecom_bots")
+async def list_wecom_bots_mcp() -> dict[str, Any]:
+    """List all configured WeCom bots.
+
+    Use this tool to discover available bots before sending messages.
+    Each bot has an id, name, and optional description.
+
+    Returns:
+        dict: Contains 'bots' list and 'count' of available bots.
+            Each bot entry has: id, name, description, has_webhook
+
+    """
+    bots = list_available_bots()
+    registry = get_bot_registry()
+
+    return {
+        "bots": bots,
+        "count": len(bots),
+        "has_multiple_bots": registry.has_multiple_bots(),
+        "default_bot": "default" if registry.has_bot("default") else (bots[0]["id"] if bots else None),
+        "instructions": (
+            "To send a message to a specific bot, use the 'bot_id' parameter in send_message, "
+            "send_wecom_image, or send_wecom_file tools. "
+            "If bot_id is not specified, the default bot will be used."
+        ),
+    }

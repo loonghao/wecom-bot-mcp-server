@@ -25,6 +25,7 @@ A Model Context Protocol (MCP) compliant server implementation for WeCom (WeChat
   - Markdown messages
   - Image messages (base64)
   - File messages
+- **Multi-bot support**: Configure and use multiple WeCom bots
 - @mention support (via user ID or phone number)
 - Message history tracking
 - Configurable logging system
@@ -83,6 +84,8 @@ Add the server to your MCP client configuration file:
 
 ### Setting Environment Variables
 
+#### Single Bot (Default)
+
 ```bash
 # Windows PowerShell
 $env:WECOM_WEBHOOK_URL = "your-webhook-url"
@@ -90,6 +93,55 @@ $env:WECOM_WEBHOOK_URL = "your-webhook-url"
 # Optional configurations
 $env:MCP_LOG_LEVEL = "DEBUG"  # Log levels: DEBUG, INFO, WARNING, ERROR, CRITICAL
 $env:MCP_LOG_FILE = "path/to/custom/log/file.log"  # Custom log file path
+```
+
+#### Multiple Bots Configuration
+
+You can configure multiple bots using any of these methods:
+
+**Method 1: JSON Configuration (Recommended)**
+
+```bash
+# Windows PowerShell
+$env:WECOM_BOTS = '{"alert": {"name": "Alert Bot", "webhook_url": "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=xxx", "description": "For alerts"}, "ci": {"name": "CI Bot", "webhook_url": "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=yyy", "description": "For CI/CD"}}'
+
+# Linux/macOS
+export WECOM_BOTS='{"alert": {"name": "Alert Bot", "webhook_url": "https://...", "description": "For alerts"}, "ci": {"name": "CI Bot", "webhook_url": "https://...", "description": "For CI/CD"}}'
+```
+
+**Method 2: Individual Environment Variables**
+
+```bash
+# Windows PowerShell
+$env:WECOM_BOT_ALERT_URL = "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=xxx"
+$env:WECOM_BOT_CI_URL = "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=yyy"
+$env:WECOM_BOT_NOTIFY_URL = "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=zzz"
+```
+
+**Method 3: Combined Mode**
+
+```bash
+# WECOM_WEBHOOK_URL becomes the "default" bot
+$env:WECOM_WEBHOOK_URL = "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=default"
+# Additional bots
+$env:WECOM_BOT_ALERT_URL = "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=alert"
+```
+
+#### MCP Client Configuration with Multiple Bots
+
+```json
+{
+  "mcpServers": {
+    "wecom": {
+      "command": "uvx",
+      "args": ["wecom-bot-mcp-server"],
+      "env": {
+        "WECOM_WEBHOOK_URL": "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=default",
+        "WECOM_BOTS": "{\"alert\": {\"name\": \"Alert Bot\", \"webhook_url\": \"https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=alert\"}, \"ci\": {\"name\": \"CI Bot\", \"webhook_url\": \"https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=ci\"}}"
+      }
+    }
+  }
+}
 ```
 
 ### Log Management
@@ -145,13 +197,39 @@ ASSISTANT: "I'll send the image"
 The server provides the following tools that your AI assistant can use:
 
 1. **send_message** - Send text or markdown messages
-   - Parameters: `content`, `msg_type` (text/markdown), `mentioned_list`, `mentioned_mobile_list`
+   - Parameters: `content`, `msg_type` (text/markdown), `mentioned_list`, `mentioned_mobile_list`, `bot_id`
 
 2. **send_file** - Send files to WeCom
-   - Parameters: `file_path`
+   - Parameters: `file_path`, `bot_id`
 
 3. **send_image** - Send images to WeCom
-   - Parameters: `image_path` (local path or URL)
+   - Parameters: `image_path` (local path or URL), `bot_id`
+
+4. **list_wecom_bots** - List all configured bots
+   - Returns: List of available bots with their IDs, names, and descriptions
+
+### Multi-Bot Usage Examples
+
+**Scenario 5: Send alert to specific bot**
+```
+USER: "Send a critical alert to the alert bot: Server CPU usage is above 90%"
+ASSISTANT: "I'll send the alert to the alert bot"
+[The assistant will use send_message with bot_id="alert"]
+```
+
+**Scenario 6: List available bots**
+```
+USER: "What WeCom bots are available?"
+ASSISTANT: "Let me check the available bots"
+[The assistant will use list_wecom_bots tool]
+```
+
+**Scenario 7: Send CI notification**
+```
+USER: "Send build success notification to the CI bot"
+ASSISTANT: "I'll send the notification to the CI bot"
+[The assistant will use send_message with bot_id="ci"]
+```
 
 ### For Developers: Direct API Usage
 
@@ -160,7 +238,7 @@ If you want to use this package directly in your Python code (not as an MCP serv
 ```python
 from wecom_bot_mcp_server import send_message, send_wecom_file, send_wecom_image
 
-# Send markdown message
+# Send markdown message (uses default bot)
 await send_message(
     content="**Hello World!**",
     msg_type="markdown"
@@ -173,11 +251,44 @@ await send_message(
     mentioned_list=["user1", "user2"]
 )
 
-# Send file
-await send_wecom_file("/path/to/file.txt")
+# Send message to a specific bot
+await send_message(
+    content="Build completed successfully!",
+    msg_type="markdown",
+    bot_id="ci"  # Send to CI bot
+)
 
-# Send image
-await send_wecom_image("/path/to/image.png")
+# Send alert to alert bot
+await send_message(
+    content="⚠️ High CPU usage detected!",
+    msg_type="markdown",
+    bot_id="alert"
+)
+
+# Send file to specific bot
+await send_wecom_file("/path/to/file.txt", bot_id="ci")
+
+# Send image to specific bot
+await send_wecom_image("/path/to/image.png", bot_id="alert")
+```
+
+### Multi-Bot Configuration in Code
+
+```python
+from wecom_bot_mcp_server.bot_config import get_bot_registry, list_available_bots
+
+# List all available bots
+bots = list_available_bots()
+for bot in bots:
+    print(f"Bot: {bot['id']} - {bot['name']}")
+
+# Check if a specific bot exists
+registry = get_bot_registry()
+if registry.has_bot("alert"):
+    print("Alert bot is configured")
+
+# Get webhook URL for a specific bot
+url = registry.get_webhook_url("ci")
 ```
 
 ## Development
@@ -259,6 +370,7 @@ wecom-bot-mcp-server/
 │       ├── message.py
 │       ├── file.py
 │       ├── image.py
+│       ├── bot_config.py   # Multi-bot configuration
 │       ├── utils.py
 │       └── errors.py
 ├── tests/

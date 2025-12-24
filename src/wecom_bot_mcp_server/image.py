@@ -4,6 +4,7 @@
 import os
 from pathlib import Path
 import tempfile
+from typing import Annotated
 from typing import Any
 
 # Import third-party modules
@@ -12,12 +13,13 @@ import aiohttp
 from loguru import logger
 from mcp.server.fastmcp import Context
 from notify_bridge import NotifyBridge
+from pydantic import Field
 
 # Import local modules
 from wecom_bot_mcp_server.app import mcp
+from wecom_bot_mcp_server.bot_config import get_bot_registry
 from wecom_bot_mcp_server.errors import ErrorCode
 from wecom_bot_mcp_server.errors import WeComError
-from wecom_bot_mcp_server.utils import get_webhook_url
 
 
 async def download_image(url: str, ctx: Context | None = None) -> Path:
@@ -82,12 +84,14 @@ async def download_image(url: str, ctx: Context | None = None) -> Path:
 
 async def send_wecom_image(
     image_path: str,
+    bot_id: str | None = None,
     ctx: Context | None = None,
 ) -> dict[str, Any]:
     """Send image to WeCom.
 
     Args:
         image_path: Path to image file or URL
+        bot_id: Bot identifier for multi-bot setups. If None, uses the default bot.
         ctx: FastMCP context
 
     Returns:
@@ -99,14 +103,14 @@ async def send_wecom_image(
     """
     if ctx:
         await ctx.report_progress(0.1)
-        await ctx.info(f"Processing image: {image_path}")
+        await ctx.info(f"Processing image: {image_path}" + (f" via bot '{bot_id}'" if bot_id else ""))
 
     try:
         # Process and validate image
         image_path_p = await _process_image_path(image_path, ctx)
 
-        # Get webhook URL
-        base_url = await _get_webhook_url(ctx)
+        # Get webhook URL for the specified bot
+        base_url = await _get_webhook_url(bot_id, ctx)
 
         # Send image to WeCom
         if ctx:
@@ -174,10 +178,11 @@ async def _process_image_path(image_path: str | Path, ctx: Context | None = None
     return image_path
 
 
-async def _get_webhook_url(ctx: Context | None = None) -> str:
-    """Get webhook URL.
+async def _get_webhook_url(bot_id: str | None = None, ctx: Context | None = None) -> str:
+    """Get webhook URL for a specific bot.
 
     Args:
+        bot_id: Bot identifier. If None, uses the default bot.
         ctx: FastMCP context
 
     Returns:
@@ -188,7 +193,7 @@ async def _get_webhook_url(ctx: Context | None = None) -> str:
 
     """
     try:
-        return get_webhook_url()
+        return get_bot_registry().get_webhook_url(bot_id)
     except WeComError as e:
         if ctx:
             await ctx.error(str(e))
@@ -267,12 +272,22 @@ async def _process_image_response(response: Any, image_path: Path, ctx: Context 
 
 @mcp.tool(name="send_wecom_image")
 async def send_wecom_image_mcp(
-    image_path: str,
+    image_path: Annotated[str, Field(description="Path to the image file to send")],
+    bot_id: Annotated[
+        str | None,
+        Field(
+            description=(
+                "Bot identifier for multi-bot setups. If not specified, uses the default bot. "
+                "Use `list_wecom_bots` tool to see available bots."
+            )
+        ),
+    ] = None,
 ) -> dict[str, Any]:
     """Send image to WeCom.
 
     Args:
         image_path: Path to the image file to send
+        bot_id: Bot identifier for multi-bot setups. If None, uses the default bot.
 
     Returns:
         dict: Response with image information and status
@@ -281,4 +296,4 @@ async def send_wecom_image_mcp(
         WeComError: If image sending fails
 
     """
-    return await send_wecom_image(image_path=image_path, ctx=None)
+    return await send_wecom_image(image_path=image_path, bot_id=bot_id, ctx=None)
