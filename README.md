@@ -21,10 +21,11 @@ A Model Context Protocol (MCP) compliant server implementation for WeCom (WeChat
 ## Features
 
 - Support for multiple message types:
-  - Text messages
-  - Markdown messages
-  - Image messages (base64)
+  - Markdown messages (with @mentions and font colors)
+  - Markdown V2 messages (with tables, lists, embedded images)
+  - Image messages (base64/local file/URL)
   - File messages
+  - Template card messages (text_notice and news_notice)
 - **Multi-bot support**: Configure and use multiple WeCom bots
 - @mention support (via user ID or phone number)
 - Message history tracking
@@ -197,15 +198,25 @@ ASSISTANT: "I'll send the image"
 The server provides the following tools that your AI assistant can use:
 
 1. **send_message** - Send text or markdown messages
-   - Parameters: `content`, `msg_type` (text/markdown), `mentioned_list`, `mentioned_mobile_list`, `bot_id`
+   - Parameters: `content`, `msg_type` (markdown/markdown_v2), `mentioned_list`, `mentioned_mobile_list`, `bot_id`
+   - `markdown`: Use when content contains `<@userid>` mentions or font colors. The `<@userid>` syntax is WeCom's official mention format, which avoids conflicts with email addresses like `@user@email.com`
+   - `markdown_v2`: Use for tables, lists, embedded images, or general content (default)
 
-2. **send_file** - Send files to WeCom
+2. **send_wecom_file** - Send files to WeCom
    - Parameters: `file_path`, `bot_id`
 
-3. **send_image** - Send images to WeCom
+3. **send_wecom_image** - Send images to WeCom
    - Parameters: `image_path` (local path or URL), `bot_id`
 
-4. **list_wecom_bots** - List all configured bots
+4. **send_wecom_template_card_text_notice** - Send text notice template card
+   - Parameters: `template_card_source`, `template_card_main_title`, `template_card_card_action`, `bot_id`, and optional fields
+   - Use for notifications with emphasis content, quotes, and action buttons
+
+5. **send_wecom_template_card_news_notice** - Send news notice template card
+   - Parameters: `template_card_source`, `template_card_main_title`, `template_card_card_action`, `template_card_image`, `bot_id`, and optional fields
+   - Use for news-style notifications with images and rich content
+
+6. **list_wecom_bots** - List all configured bots
    - Returns: List of available bots with their IDs, names, and descriptions
 
 ### Multi-Bot Usage Examples
@@ -231,12 +242,26 @@ ASSISTANT: "I'll send the notification to the CI bot"
 [The assistant will use send_message with bot_id="ci"]
 ```
 
+**Scenario 8: Send template card notification**
+```
+USER: "Send a deployment success notification card with a link to the dashboard"
+ASSISTANT: "I'll send a template card notification"
+[The assistant will use send_wecom_template_card_text_notice tool]
+```
+
+**Scenario 9: Send news-style notification**
+```
+USER: "Send a news card about the new feature release with an image"
+ASSISTANT: "I'll send a news notice card"
+[The assistant will use send_wecom_template_card_news_notice tool]
+```
+
 ### For Developers: Direct API Usage
 
 If you want to use this package directly in your Python code (not as an MCP server):
 
 ```python
-from wecom_bot_mcp_server import send_message, send_wecom_file, send_wecom_image
+from wecom_bot_mcp_server import send_message, send_wecom_file, send_wecom_image, send_wecom_template_card
 
 # Send markdown message (uses default bot)
 await send_message(
@@ -244,24 +269,30 @@ await send_message(
     msg_type="markdown"
 )
 
-# Send text message and mention users
+# Send markdown_v2 message with tables and lists (default)
 await send_message(
-    content="Hello @user1 @user2",
-    msg_type="text",
+    content="| Column1 | Column2 |\n|---------|---------|\\n| Value1  | Value2  |",
+    msg_type="markdown_v2"
+)
+
+# Send text message and mention users (use markdown for @mentions)
+await send_message(
+    content="Hello <@user1> <@user2>",
+    msg_type="markdown",
     mentioned_list=["user1", "user2"]
 )
 
 # Send message to a specific bot
 await send_message(
     content="Build completed successfully!",
-    msg_type="markdown",
+    msg_type="markdown_v2",
     bot_id="ci"  # Send to CI bot
 )
 
 # Send alert to alert bot
 await send_message(
     content="⚠️ High CPU usage detected!",
-    msg_type="markdown",
+    msg_type="markdown_v2",
     bot_id="alert"
 )
 
@@ -270,6 +301,16 @@ await send_wecom_file("/path/to/file.txt", bot_id="ci")
 
 # Send image to specific bot
 await send_wecom_image("/path/to/image.png", bot_id="alert")
+
+# Send template card (text_notice)
+await send_wecom_template_card(
+    template_card_type="text_notice",
+    template_card_source={"icon_url": "https://example.com/icon.png", "desc": "System"},
+    template_card_main_title={"title": "Deployment Success", "desc": "Production environment"},
+    template_card_card_action={"type": 1, "url": "https://example.com/dashboard"},
+    template_card_emphasis_content={"title": "100%", "desc": "Success Rate"},
+    bot_id="ci"
+)
 ```
 
 ### Multi-Bot Configuration in Code
@@ -366,18 +407,23 @@ wecom-bot-mcp-server/
 ├── src/
 │   └── wecom_bot_mcp_server/
 │       ├── __init__.py
-│       ├── server.py
-│       ├── message.py
-│       ├── file.py
-│       ├── image.py
-│       ├── bot_config.py   # Multi-bot configuration
-│       ├── utils.py
-│       └── errors.py
+│       ├── __main__.py
+│       ├── __version__.py
+│       ├── app.py           # FastMCP application setup
+│       ├── server.py        # Server entry point
+│       ├── message.py       # Message and template card handling
+│       ├── file.py          # File upload handling
+│       ├── image.py         # Image upload handling
+│       ├── bot_config.py    # Multi-bot configuration
+│       ├── utils.py         # Utility functions
+│       ├── log_config.py    # Logging configuration
+│       └── errors.py        # Error definitions
 ├── tests/
 │   ├── test_server.py
 │   ├── test_message.py
 │   ├── test_file.py
-│   └── test_image.py
+│   ├── test_image.py
+│   └── test_bot_config.py
 ├── docs/
 ├── pyproject.toml
 ├── noxfile.py
