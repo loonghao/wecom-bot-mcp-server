@@ -491,15 +491,26 @@ async def send_wecom_template_card(
 
     Args:
         template_card_type: Type of template card ('text_notice' or 'news_notice')
+        template_card_source: Source information (icon_url, desc, desc_color)
+        template_card_main_title: Main title (title, desc)
+        template_card_emphasis_content: Emphasis content (title, desc)
+        template_card_quote_area: Quote area configuration
+        template_card_sub_title_text: Sub title text
+        template_card_horizontal_content_list: List of horizontal content items
+        template_card_vertical_content_list: List of vertical content items
+        template_card_jump_list: List of jump links
+        template_card_card_action: Card action configuration (type, url, appid, pagepath)
+        template_card_image: Image configuration for news_notice type
+        template_card_image_text_area: Image text area for news_notice type
         bot_id: Bot identifier for multi-bot setups. If None, uses the default bot.
         ctx: FastMCP context
-        **template_kwargs: Template card configuration fields
 
     """
     if ctx:
         await ctx.report_progress(0.1)
-        await ctx.info(f"Sending template_card ({template_card_type}) message" +
-                      (f" via bot '{bot_id}'" if bot_id else ""))
+        await ctx.info(
+            f"Sending template_card ({template_card_type}) message" + (f" via bot '{bot_id}'" if bot_id else "")
+        )
 
     valid_types = ("text_notice", "news_notice")
     if template_card_type not in valid_types:

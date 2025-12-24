@@ -60,6 +60,7 @@ def get_webhook_url_for_bot(bot_id: str | None = None) -> str:
 
     """
     # Import here to avoid circular imports
+    # Import local modules
     from wecom_bot_mcp_server.bot_config import get_bot_registry
 
     return get_bot_registry().get_webhook_url(bot_id)

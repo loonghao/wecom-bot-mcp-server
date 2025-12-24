@@ -68,8 +68,7 @@ class BotConfig:
             )
         if not self.webhook_url.startswith(("http://", "https://")):
             raise WeComError(
-                f"Bot '{self.name}' webhook_url must start with 'http://' or 'https://'. "
-                f"Got: '{self.webhook_url}'",
+                f"Bot '{self.name}' webhook_url must start with 'http://' or 'https://'. Got: '{self.webhook_url}'",
                 ErrorCode.VALIDATION_ERROR,
             )
 
@@ -227,7 +226,7 @@ class BotRegistry:
         """
         return self.get(bot_id).webhook_url
 
-    def list_bots(self) -> list[dict[str, str]]:
+    def list_bots(self) -> list[dict[str, str | bool]]:
         """List all configured bots.
 
         Returns:
@@ -336,7 +335,7 @@ def get_webhook_url_for_bot(bot_id: str | None = None) -> str:
     return get_bot_registry().get_webhook_url(bot_id)
 
 
-def list_available_bots() -> list[dict[str, str]]:
+def list_available_bots() -> list[dict[str, str | bool]]:
     """List all available bots.
 
     Returns:
@@ -371,7 +370,7 @@ def get_multi_bot_instructions() -> str:
 
     # Multiple bots configured
     bot_list = "\n".join(
-        f"  - **{bot['id']}**: {bot['name']}" + (f" - {bot['description']}" if bot['description'] else "")
+        f"  - **{bot['id']}**: {bot['name']}" + (f" - {bot['description']}" if bot["description"] else "")
         for bot in bots
     )
 
