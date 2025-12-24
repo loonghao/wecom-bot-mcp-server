@@ -1,0 +1,88 @@
+name: E2E Tests
+
+on:
+  # Run on push to main branch
+  push:
+    branches: [main, master]
+  # Run on PRs (without real webhook tests)
+  pull_request:
+    branches: [main, master]
+  # Allow manual trigger with webhook URL input
+  workflow_dispatch:
+    inputs:
+      run_real_tests:
+        description: 'Run real WeCom E2E tests'
+        required: false
+        default: 'false'
+        type: boolean
+
+jobs:
+  # MCP protocol E2E tests (always run)
+  mcp-e2e-tests:
+    name: MCP Protocol E2E Tests
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+          cache-dependency-path: '**/pyproject.toml'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install uv
+          uvx poetry install
+
+      - name: Run MCP E2E tests
+        run: |
+          uvx poetry run pytest tests/e2e/test_mcp_tools.py -v -m e2e --tb=short
+
+  # Real WeCom E2E tests (run on PR, main branch push, or manual trigger)
+  real-e2e-tests:
+    name: Real WeCom E2E Tests
+    runs-on: ubuntu-latest
+    # Run on PR, main branch push, or manual trigger with real tests enabled
+    if: |
+      github.event_name == 'pull_request' ||
+      (github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')) ||
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.run_real_tests == 'true')
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+          cache: 'pip'
+          cache-dependency-path: '**/pyproject.toml'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install uv
+          uvx poetry install
+
+      - name: Run Real E2E tests
+        env:
+          WECOM_WEBHOOK_URL: ${{ secrets.WECOM_WEBHOOK_URL }}
+        run: |
+          if [ -n "$WECOM_WEBHOOK_URL" ]; then
+            echo "Running real E2E tests with WeCom webhook..."
+            uvx poetry run pytest tests/e2e/test_wecom_real.py -v -m e2e_real --tb=short
+          else
+            echo "WECOM_WEBHOOK_URL secret not configured, skipping real E2E tests"
+            exit 0
+          fi

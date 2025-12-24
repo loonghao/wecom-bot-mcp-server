@@ -90,9 +90,9 @@ def test_imports(session):
 
 @nox.session
 def pytest(session):
-    """Run pytest with coverage."""
+    """Run pytest with coverage (excluding E2E tests)."""
     # Install test dependencies
-    session.install("pytest", "pytest-cov", "pytest-asyncio", "pillow", "httpx", "pyfakefs")
+    session.install("pytest", "pytest-cov", "pytest-asyncio", "pillow", "httpx", "pyfakefs", "anyio")
     session.install("-e", ".")
 
     # Get pytest arguments
@@ -101,9 +101,49 @@ def pytest(session):
     session.run(
         "pytest",
         *pytest_args,
+        "--ignore=tests/e2e",
         "--cov=wecom_bot_mcp_server",
         "--cov-report=xml:coverage.xml",
         "--cov-report=term-missing",
+    )
+
+
+@nox.session
+def e2e(session):
+    """Run E2E tests using MCP in-memory transport."""
+    # Install test dependencies
+    session.install("pytest", "pytest-asyncio", "anyio")
+    session.install("-e", ".")
+
+    # Run E2E tests (excluding real webhook tests)
+    session.run(
+        "pytest",
+        "tests/e2e/test_mcp_tools.py",
+        "-v",
+        "-m",
+        "e2e",
+        "--tb=short",
+    )
+
+
+@nox.session
+def e2e_real(session):
+    """Run real E2E tests with actual WeCom webhook.
+
+    Requires WECOM_WEBHOOK_URL environment variable to be set.
+    """
+    # Install test dependencies
+    session.install("pytest", "pytest-asyncio", "anyio")
+    session.install("-e", ".")
+
+    # Run real E2E tests
+    session.run(
+        "pytest",
+        "tests/e2e/test_wecom_real.py",
+        "-v",
+        "-m",
+        "e2e_real",
+        "--tb=short",
     )
 
 

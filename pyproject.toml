@@ -34,6 +34,7 @@ pytest-asyncio = "^1.0.0"
 mypy = "^1.5.1"
 ruff = "^0.12.0"
 pyfakefs = "^6.0.0"
+anyio = "^4.8.0"
 
 [tool.poetry.scripts]
 wecom-bot-mcp-server = "wecom_bot_mcp_server.server:main"
@@ -58,6 +59,10 @@ addopts = ""
 testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_functions = ["test_*"]
+markers = [
+    "e2e: mark test as end-to-end test",
+    "e2e_real: mark test as real E2E test requiring actual webhook",
+]
 
 [tool.pytest-asyncio]
 mode = "auto"
@@ -112,6 +117,7 @@ ignore = ["D203", "D213", "ARG001", "D107", "D105", "D102", "F811", "I001"]
 "__init__.py" = ["F401"]
 "noxfile.py" = ["E402", "I001"]
 "tests/*.py" = ["ARG001", "F401", "F811", "D107", "D105", "D102", "E501", "I001"]
+"tests/e2e/*.py" = ["ARG001", "F401", "F811", "D107", "D105", "D102", "E501", "I001"]
 
 [tool.ruff.format]
 quote-style = "double"
