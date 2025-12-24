@@ -3,6 +3,7 @@
 # Import built-in modules
 from typing import Annotated
 from typing import Any
+from typing import Literal
 
 # Import third-party modules
 from loguru import logger
@@ -16,6 +17,9 @@ from wecom_bot_mcp_server.errors import ErrorCode
 from wecom_bot_mcp_server.errors import WeComError
 from wecom_bot_mcp_server.utils import encode_text
 from wecom_bot_mcp_server.utils import get_webhook_url
+
+# Type alias for message types
+MessageType = Literal["markdown", "markdown_v2"]
 
 # Constants
 MESSAGE_HISTORY_KEY = "history://messages"
@@ -64,7 +68,21 @@ def get_markdown_capabilities_resource() -> str:
     """
     return (
         "# WeCom Markdown Capabilities\n\n"
-        "## Common to markdown and markdown_v2\n"
+        "## Message Type Selection Guide\n"
+        "**IMPORTANT**: Choose the correct msg_type based on your content:\n\n"
+        "### Use `markdown` when:\n"
+        "- Content contains user mentions using `<@userid>` syntax\n"
+        "- Content uses font colors: `<font color=\"info|comment|warning\">text</font>`\n"
+        "- You need to @mention specific users in the message\n\n"
+        "### Use `markdown_v2` when:\n"
+        "- Content contains tables (using | columns |)\n"
+        "- Content contains ordered/unordered lists\n"
+        "- Content contains embedded images: `![alt](url)`\n"
+        "- Content contains URLs with underscores (markdown_v2 preserves them)\n"
+        "- Content uses multi-level quotes (>>, >>>)\n"
+        "- Content uses horizontal rules (---)\n"
+        "- Default choice for general formatted content without mentions\n\n"
+        "## Common to both markdown and markdown_v2\n"
         "- Headers (# to ######)\n"
         "- Bold (**text**) and italic (*text*)\n"
         "- Links: [text](url)\n"
@@ -72,13 +90,15 @@ def get_markdown_capabilities_resource() -> str:
         "- Block quotes: > quote\n\n"
         "## Only markdown\n"
         '- Font colors: <font color="info|comment|warning">text</font>\n'
-        "- Mentions: <@userid>\n\n"
+        "- Mentions: <@userid> - Use this to @mention users!\n\n"
         "## Only markdown_v2\n"
         "- Tables (using | columns | and separator rows)\n"
         "- Lists (ordered and unordered)\n"
         "- Multi-level quotes (>>, >>>)\n"
         "- Images embedded with ![alt](url), e.g. ![chart](https://example.com/chart.png)\n"
-        "- Horizontal rules (---)\n\n"
+        "- Horizontal rules (---)\n"
+        "- Preserves underscores in URLs\n"
+        "- Auto-escapes slashes in URLs\n\n"
         "## Image sending recommendations\n"
         "- If the main content is a standalone image file or screenshot, "
         "send it with the send_wecom_image tool (msg_type=image), passing the local file path as `image_path`.\n"
@@ -96,21 +116,35 @@ def get_markdown_capabilities_resource() -> str:
 def wecom_message_guidelines() -> str:
     """High-level guidelines for planning WeCom messages.
 
-    This prompt explains how to use the single supported message type
-    `markdown_v2` and when to call the image/file tools.
+    This prompt explains how to choose between `markdown` and `markdown_v2`
+    message types and when to call the image/file tools.
     """
     return (
         "When sending messages to WeCom via this MCP server, follow these rules:\n\n"
-        "- This server **only** supports the `markdown_v2` message type.\n"
-        "- For plain text, still use `markdown_v2` but avoid extra formatting.\n"
-        "- For formatted content (headings, bold/italic, links, tables, lists, images, nested quotes), "
-        "also use `markdown_v2`.\n"
+        "## Message Type Selection (IMPORTANT)\n"
+        "This server supports two markdown message types. Choose based on content:\n\n"
+        "### Use `markdown` when:\n"
+        "- **Content contains @mentions**: If you need to mention users with `<@userid>` syntax, "
+        "you MUST use `markdown` type. The `<@userid>` syntax ONLY works in `markdown` type.\n"
+        "- **Content uses font colors**: `<font color=\"info|comment|warning\">text</font>`\n"
+        "- Example: `<@john_doe> Please review this report` → use `markdown`\n\n"
+        "### Use `markdown_v2` when:\n"
+        "- Content contains **tables** (using | columns |)\n"
+        "- Content contains **lists** (ordered or unordered)\n"
+        "- Content contains **embedded images**: `![alt](url)`\n"
+        "- Content contains **URLs with underscores** (markdown_v2 preserves them)\n"
+        "- Content uses **multi-level quotes** (>>, >>>)\n"
+        "- **Default choice** for general formatted content without @mentions\n\n"
+        "## Quick Decision Rule\n"
+        "**If the content has `<@userid>` patterns → use `markdown`**\n"
+        "**Otherwise → use `markdown_v2`**\n\n"
+        "## Other Guidelines\n"
+        "- For plain text without special formatting, use `markdown_v2`.\n"
         "- When you have an image URL that should appear inside the text, embed it inline "
         "using markdown_v2 image syntax: ![description](image_url).\n"
         "- You may reference local filesystem images (e.g. C:\\path\\to\\image.png or /tmp/image.png); "
         "this server will attempt to upload them via the WeCom file API and rewrite the markdown to use a "
         "remote URL when possible. If upload fails, the original path is kept as a fallback.\n"
-        "- Do not request `text` or legacy `markdown` msg_type; they will be rejected as invalid.\n"
         "- If the main content is an image file (local path or URL), "
         "call the `send_wecom_image` tool instead of embedding it in markdown.\n"
         "- If the user asks to send a non-image file (reports, logs, archives), "
@@ -133,7 +167,9 @@ async def send_message(
 
     Args:
         content: Message content
-        msg_type: Message type (only 'markdown_v2' is supported); default is markdown_v2
+        msg_type: Message type. Supported values:
+            - 'markdown': Use when content contains <@userid> mentions or font colors
+            - 'markdown_v2': Use for tables, lists, embedded images, or general content (default)
         mentioned_list: List of mentioned users
         mentioned_mobile_list: List of mentioned mobile numbers
         ctx: FastMCP context
@@ -200,9 +236,10 @@ async def _validate_message_inputs(content: str, msg_type: str, ctx: Context | N
             await ctx.error(error_msg)
         raise WeComError(error_msg, ErrorCode.VALIDATION_ERROR)
 
-    # Validate message type - only markdown_v2 is supported now
-    if msg_type != "markdown_v2":
-        error_msg = f"Invalid message type: {msg_type}. Only 'markdown_v2' is supported."
+    # Validate message type - only markdown and markdown_v2 are supported
+    valid_msg_types = ("markdown", "markdown_v2")
+    if msg_type not in valid_msg_types:
+        error_msg = f"Invalid message type: {msg_type}. Supported types: {', '.join(valid_msg_types)}."
         logger.error(error_msg)
         if ctx:
             await ctx.error(error_msg)
@@ -235,7 +272,7 @@ async def _prepare_message_content(content: str, msg_type: str = "markdown_v2", 
 
     Args:
         content: Message content
-        msg_type: Message type (only 'markdown_v2' is supported)
+        msg_type: Message type ('markdown' or 'markdown_v2')
         ctx: FastMCP context
 
     Returns:
@@ -350,7 +387,19 @@ async def _process_message_response(response: Any, ctx: Context | None = None) -
 @mcp.tool(name="send_message")
 async def send_message_mcp(
     content: str,
-    msg_type: str = "markdown_v2",
+    msg_type: Annotated[
+        MessageType,
+        Field(
+            description=(
+                "Message type. Choose based on content:\n"
+                "- 'markdown': Use when content contains <@userid> mentions or "
+                "<font color=\"...\">text</font> colors. The <@userid> syntax ONLY works in markdown type.\n"
+                "- 'markdown_v2': Use for tables, lists, embedded images ![alt](url), "
+                "URLs with underscores, or general formatted content. This is the default.\n"
+                "Quick rule: If content has <@userid> → use 'markdown', otherwise → use 'markdown_v2'"
+            )
+        ),
+    ] = "markdown_v2",
     mentioned_list: Annotated[list[str], Field(description="List of user IDs to mention")] = [],
     mentioned_mobile_list: Annotated[list[str], Field(description="List of mobile numbers to mention")] = [],
 ) -> dict[str, str]:
@@ -358,7 +407,8 @@ async def send_message_mcp(
 
     Args:
         content: Message content to send
-        msg_type: Message type (only 'markdown_v2' is supported)
+        msg_type: Message type. Use 'markdown' for @mentions (<@userid>), use 'markdown_v2' for
+            tables, lists, images, or general content.
         mentioned_list: List of user IDs to mention
         mentioned_mobile_list: List of mobile numbers to mention
 

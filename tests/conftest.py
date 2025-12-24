@@ -753,13 +753,27 @@ def mock_message_send():
 
 
 @pytest.fixture(autouse=True)
-def setup_env():
-    """Set up environment variables for tests."""
+def setup_env(request):
+    """Set up environment variables for tests.
+
+    Note: This fixture does NOT apply to e2e tests to avoid overriding
+    the real WECOM_WEBHOOK_URL environment variable.
+    """
+    # Skip this fixture for e2e tests
+    if "e2e" in str(request.fspath):
+        yield
+        return
+
+    # Save original value if exists
+    original_url = os.environ.get("WECOM_WEBHOOK_URL")
+
     # Set up test environment variables
     os.environ["WECOM_WEBHOOK_URL"] = "https://example.com/webhook/test"
     yield
-    # Clean up
-    if "WECOM_WEBHOOK_URL" in os.environ:
+    # Clean up - restore original or delete
+    if original_url is not None:
+        os.environ["WECOM_WEBHOOK_URL"] = original_url
+    elif "WECOM_WEBHOOK_URL" in os.environ:
         del os.environ["WECOM_WEBHOOK_URL"]
 
 

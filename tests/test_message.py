@@ -72,6 +72,40 @@ async def test_send_message(mock_get_webhook_url, mock_notify_bridge):
 
 
 @pytest.mark.asyncio
+@patch("wecom_bot_mcp_server.message.NotifyBridge")
+@patch("wecom_bot_mcp_server.message.get_webhook_url")
+async def test_send_message_with_markdown_type(mock_get_webhook_url, mock_notify_bridge):
+    """Test send_message function with markdown type for @mentions."""
+    # Setup mocks
+    mock_get_webhook_url.return_value = "https://example.com/webhook"
+
+    mock_response = MagicMock()
+    mock_response.success = True
+    mock_response.data = {"errcode": 0, "errmsg": "ok"}
+
+    mock_nb_instance = AsyncMock()
+    mock_nb_instance.send_async.return_value = mock_response
+    mock_notify_bridge.return_value.__aenter__.return_value = mock_nb_instance
+
+    # Call function with markdown type (for @mentions)
+    result = await send_message("<@john_doe> Please review this", msg_type="markdown")
+
+    # Assertions
+    assert result["status"] == "success"
+    assert result["message"] == "Message sent successfully"
+
+    mock_get_webhook_url.assert_called_once()
+    mock_nb_instance.send_async.assert_called_once_with(
+        "wecom",
+        webhook_url="https://example.com/webhook",
+        msg_type="markdown",
+        content="<@john_doe> Please review this",
+        mentioned_list=[],
+        mentioned_mobile_list=[],
+    )
+
+
+@pytest.mark.asyncio
 async def test_send_message_with_context(mock_notify_bridge, mock_webhook_url):
     """Test send_message function with context."""
     # Create mock context
@@ -174,8 +208,9 @@ def test_wecom_message_guidelines_prompt():
 @pytest.mark.asyncio
 async def test_validate_message_inputs_valid():
     """Test _validate_message_inputs with valid inputs."""
-    # This should not raise an exception for the only supported type
+    # This should not raise an exception for supported types
     await _validate_message_inputs("Test message", "markdown_v2")
+    await _validate_message_inputs("Test message", "markdown")
 
 
 @pytest.mark.asyncio
