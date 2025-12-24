@@ -1,3 +1,15 @@
+## v0.10.1 (2025-12-24)
+
+### Fix
+
+- **tests**: use patch on _bot_registry variable for proper isolation
+- **tests**: directly replace _bot_registry for proper test isolation
+- **tests**: use MagicMock for complete isolation from environment
+- **tests**: use patch to mock get_bot_registry for reliable test isolation
+- **tests**: improve test isolation for bot_config tests
+- update tests to mock get_bot_registry instead of get_webhook_url
+- resolve lint errors (ruff, isort, mypy)
+
 ## v0.10.0 (2025-12-24)
 
 ### Feat
