@@ -1,3 +1,9 @@
+## v0.9.0 (2025-12-24)
+
+### Feat
+
+- add markdown type selection and E2E testing framework
+
 ## v0.8.3 (2025-11-28)
 
 ### Fix
