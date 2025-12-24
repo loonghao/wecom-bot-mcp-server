@@ -190,49 +190,54 @@ class TestMultiBotInstructions:
     """Tests for multi-bot instruction generation."""
 
     @pytest.fixture
-    def clean_env(self):
-        """Fixture to clean environment variables."""
-        env_vars = ["WECOM_WEBHOOK_URL", "WECOM_BOTS", "WECOM_BOT_ALERT_URL"]
-        original = {k: os.environ.get(k) for k in env_vars}
-        for k in env_vars:
-            if k in os.environ:
-                del os.environ[k]
-        yield
-        for k, v in original.items():
-            if v is not None:
-                os.environ[k] = v
-            elif k in os.environ:
-                del os.environ[k]
-
-    def test_no_bots_instructions(self, clean_env):
-        """Test instructions when no bots configured."""
-        # Clear the global registry
+    def clean_registry(self):
+        """Fixture to clean bot registry and environment variables."""
         # Import local modules
         import wecom_bot_mcp_server.bot_config as bc
 
+        # Save original registry
+        original_registry = bc._bot_registry
+
+        # Clean all WECOM env vars
+        env_vars_to_clean = [k for k in os.environ if k.startswith("WECOM_")]
+        original_env = {k: os.environ.get(k) for k in env_vars_to_clean}
+        for k in env_vars_to_clean:
+            del os.environ[k]
+
+        # Reset registry
         bc._bot_registry = None
 
+        yield bc
+
+        # Restore environment
+        for k in [k for k in os.environ if k.startswith("WECOM_")]:
+            del os.environ[k]
+        for k, v in original_env.items():
+            if v is not None:
+                os.environ[k] = v
+
+        # Restore registry
+        bc._bot_registry = original_registry
+
+    def test_no_bots_instructions(self, clean_registry):
+        """Test instructions when no bots configured."""
         instructions = get_multi_bot_instructions()
         assert "No WeCom bots are configured" in instructions
 
-    def test_single_bot_instructions(self, clean_env):
+    def test_single_bot_instructions(self, clean_registry):
         """Test instructions with single bot."""
-        # Import local modules
-        import wecom_bot_mcp_server.bot_config as bc
-
-        # Set env var BEFORE resetting registry
+        bc = clean_registry
+        # Set env var and reset registry to pick up new env
         os.environ["WECOM_WEBHOOK_URL"] = "https://example.com/default"
         bc._bot_registry = None
 
         instructions = get_multi_bot_instructions()
         assert "One WeCom bot is configured" in instructions
 
-    def test_multiple_bots_instructions(self, clean_env):
+    def test_multiple_bots_instructions(self, clean_registry):
         """Test instructions with multiple bots."""
-        # Import local modules
-        import wecom_bot_mcp_server.bot_config as bc
-
-        # Set env vars BEFORE resetting registry
+        bc = clean_registry
+        # Set env vars and reset registry to pick up new env
         os.environ["WECOM_WEBHOOK_URL"] = "https://example.com/default"
         os.environ["WECOM_BOT_ALERT_URL"] = "https://example.com/alert"
         bc._bot_registry = None
@@ -246,26 +251,39 @@ class TestListAvailableBots:
     """Tests for list_available_bots function."""
 
     @pytest.fixture
-    def clean_env(self):
-        """Fixture to clean environment variables."""
-        env_vars = ["WECOM_WEBHOOK_URL", "WECOM_BOT_ALERT_URL"]
-        original = {k: os.environ.get(k) for k in env_vars}
-        for k in env_vars:
-            if k in os.environ:
-                del os.environ[k]
-        yield
-        for k, v in original.items():
-            if v is not None:
-                os.environ[k] = v
-            elif k in os.environ:
-                del os.environ[k]
-
-    def test_list_available_bots(self, clean_env):
-        """Test listing available bots."""
+    def clean_registry(self):
+        """Fixture to clean bot registry and environment variables."""
         # Import local modules
         import wecom_bot_mcp_server.bot_config as bc
 
-        # Set env vars BEFORE resetting registry
+        # Save original registry
+        original_registry = bc._bot_registry
+
+        # Clean all WECOM env vars
+        env_vars_to_clean = [k for k in os.environ if k.startswith("WECOM_")]
+        original_env = {k: os.environ.get(k) for k in env_vars_to_clean}
+        for k in env_vars_to_clean:
+            del os.environ[k]
+
+        # Reset registry
+        bc._bot_registry = None
+
+        yield bc
+
+        # Restore environment
+        for k in [k for k in os.environ if k.startswith("WECOM_")]:
+            del os.environ[k]
+        for k, v in original_env.items():
+            if v is not None:
+                os.environ[k] = v
+
+        # Restore registry
+        bc._bot_registry = original_registry
+
+    def test_list_available_bots(self, clean_registry):
+        """Test listing available bots."""
+        bc = clean_registry
+        # Set env vars and reset registry to pick up new env
         os.environ["WECOM_WEBHOOK_URL"] = "https://example.com/default"
         os.environ["WECOM_BOT_ALERT_URL"] = "https://example.com/alert"
         bc._bot_registry = None
