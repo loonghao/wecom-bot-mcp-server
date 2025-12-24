@@ -776,11 +776,19 @@ def setup_env(request):
 
     Note: This fixture does NOT apply to e2e tests to avoid overriding
     the real WECOM_WEBHOOK_URL environment variable.
+    Also skips for tests that need to control their own environment.
     """
     # Skip this fixture for e2e tests
     if "e2e" in str(request.fspath):
         yield
         return
+
+    # Skip for tests that manage their own environment
+    test_cls = getattr(request.node, "cls", None)
+    if test_cls is not None:
+        if test_cls.__name__ in ("TestMultiBotInstructions", "TestListAvailableBots"):
+            yield
+            return
 
     # Save original value if exists
     original_url = os.environ.get("WECOM_WEBHOOK_URL")
@@ -819,3 +827,29 @@ def clear_lru_cache():
     yield
     # Clear cache after test
     get_webhook_url.cache_clear()
+
+
+@pytest.fixture(autouse=True)
+def reset_bot_registry(request):
+    """Reset global bot registry before each test.
+
+    This ensures test isolation by clearing the singleton registry,
+    preventing state leakage between tests.
+
+    Note: Skips for tests that manage their own registry state.
+    """
+    # Import local modules
+    import wecom_bot_mcp_server.bot_config as bot_config
+
+    # Skip for tests that manage their own registry
+    test_cls = getattr(request.node, "cls", None)
+    if test_cls is not None:
+        if test_cls.__name__ in ("TestMultiBotInstructions", "TestListAvailableBots"):
+            yield
+            return
+
+    # Reset the global registry before test
+    bot_config._bot_registry = None
+    yield
+    # Reset after test as well
+    bot_config._bot_registry = None
