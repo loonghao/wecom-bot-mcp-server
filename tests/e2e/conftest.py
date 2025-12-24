@@ -1,14 +1,15 @@
 """E2E test configuration and fixtures."""
 
 # Import built-in modules
-import os
 from collections.abc import AsyncGenerator
+import os
 
 # Import third-party modules
-import pytest
 from mcp.client.session import ClientSession
 from mcp.shared.memory import create_connected_server_and_client_session
+import pytest
 
+# Import local modules
 # Import local modules - import all modules to register tools with mcp
 from wecom_bot_mcp_server.app import mcp
 
