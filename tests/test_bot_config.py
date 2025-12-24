@@ -3,8 +3,6 @@
 # Import built-in modules
 import json
 import os
-from unittest.mock import MagicMock
-from unittest.mock import patch
 
 # Import third-party modules
 import pytest
@@ -192,36 +190,65 @@ class TestMultiBotInstructions:
 
     def test_no_bots_instructions(self):
         """Test instructions when no bots configured."""
-        mock_registry = MagicMock()
-        mock_registry.list_bots.return_value = []
+        import wecom_bot_mcp_server.bot_config as bc
 
-        with patch("wecom_bot_mcp_server.bot_config.get_bot_registry", return_value=mock_registry):
+        # Create empty registry and set as global
+        mock_registry = BotRegistry()
+        mock_registry._loaded = True  # Prevent auto-loading from env
+
+        original_registry = bc._bot_registry
+        bc._bot_registry = mock_registry
+        try:
             instructions = get_multi_bot_instructions()
             assert "No WeCom bots are configured" in instructions
+        finally:
+            bc._bot_registry = original_registry
 
     def test_single_bot_instructions(self):
         """Test instructions with single bot."""
-        mock_registry = MagicMock()
-        mock_registry.list_bots.return_value = [
-            {"id": "default", "name": "default", "description": "Default bot", "has_webhook": True}
-        ]
+        import wecom_bot_mcp_server.bot_config as bc
 
-        with patch("wecom_bot_mcp_server.bot_config.get_bot_registry", return_value=mock_registry):
+        mock_registry = BotRegistry()
+        mock_registry._loaded = True
+        mock_registry._bots["default"] = BotConfig(
+            name="default",
+            webhook_url="https://example.com/default",
+            description="Default bot",
+        )
+
+        original_registry = bc._bot_registry
+        bc._bot_registry = mock_registry
+        try:
             instructions = get_multi_bot_instructions()
             assert "One WeCom bot is configured" in instructions
+        finally:
+            bc._bot_registry = original_registry
 
     def test_multiple_bots_instructions(self):
         """Test instructions with multiple bots."""
-        mock_registry = MagicMock()
-        mock_registry.list_bots.return_value = [
-            {"id": "default", "name": "default", "description": "Default bot", "has_webhook": True},
-            {"id": "alert", "name": "alert", "description": "Alert bot", "has_webhook": True},
-        ]
+        import wecom_bot_mcp_server.bot_config as bc
 
-        with patch("wecom_bot_mcp_server.bot_config.get_bot_registry", return_value=mock_registry):
+        mock_registry = BotRegistry()
+        mock_registry._loaded = True
+        mock_registry._bots["default"] = BotConfig(
+            name="default",
+            webhook_url="https://example.com/default",
+            description="Default bot",
+        )
+        mock_registry._bots["alert"] = BotConfig(
+            name="alert",
+            webhook_url="https://example.com/alert",
+            description="Alert bot",
+        )
+
+        original_registry = bc._bot_registry
+        bc._bot_registry = mock_registry
+        try:
             instructions = get_multi_bot_instructions()
             assert "Multiple WeCom Bots Available" in instructions
             assert "bot_id" in instructions
+        finally:
+            bc._bot_registry = original_registry
 
 
 class TestListAvailableBots:
@@ -229,14 +256,27 @@ class TestListAvailableBots:
 
     def test_list_available_bots(self):
         """Test listing available bots."""
-        mock_registry = MagicMock()
-        mock_registry.list_bots.return_value = [
-            {"id": "default", "name": "default", "description": "Default bot", "has_webhook": True},
-            {"id": "alert", "name": "alert", "description": "Alert bot", "has_webhook": True},
-        ]
+        import wecom_bot_mcp_server.bot_config as bc
 
-        with patch("wecom_bot_mcp_server.bot_config.get_bot_registry", return_value=mock_registry):
+        mock_registry = BotRegistry()
+        mock_registry._loaded = True
+        mock_registry._bots["default"] = BotConfig(
+            name="default",
+            webhook_url="https://example.com/default",
+            description="Default bot",
+        )
+        mock_registry._bots["alert"] = BotConfig(
+            name="alert",
+            webhook_url="https://example.com/alert",
+            description="Alert bot",
+        )
+
+        original_registry = bc._bot_registry
+        bc._bot_registry = mock_registry
+        try:
             bots = list_available_bots()
             assert len(bots) == 2
             assert any(b["id"] == "default" for b in bots)
             assert any(b["id"] == "alert" for b in bots)
+        finally:
+            bc._bot_registry = original_registry
