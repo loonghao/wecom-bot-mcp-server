@@ -1,3 +1,9 @@
+## v0.10.2 (2025-12-24)
+
+### Fix
+
+- add configure-pages step for GitHub Pages deployment
+
 ## v0.10.1 (2025-12-24)
 
 ### Fix
