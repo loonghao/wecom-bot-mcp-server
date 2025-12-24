@@ -178,16 +178,12 @@ async def test_template_card_tool_schema(client_session: ClientSession):
     tools = await client_session.list_tools()
 
     # Check text_notice template card
-    text_notice_tool = next(
-        (t for t in tools.tools if t.name == "send_wecom_template_card_text_notice"), None
-    )
+    text_notice_tool = next((t for t in tools.tools if t.name == "send_wecom_template_card_text_notice"), None)
     assert text_notice_tool is not None
     assert text_notice_tool.inputSchema is not None
 
     # Check news_notice template card
-    news_notice_tool = next(
-        (t for t in tools.tools if t.name == "send_wecom_template_card_news_notice"), None
-    )
+    news_notice_tool = next((t for t in tools.tools if t.name == "send_wecom_template_card_news_notice"), None)
     assert news_notice_tool is not None
     assert news_notice_tool.inputSchema is not None
 
@@ -229,9 +225,7 @@ async def test_image_tool_schema(client_session: ClientSession):
 async def test_prompt_description_contains_usage_guide(client_session: ClientSession):
     """Test that prompt description contains usage guidance."""
     prompts = await client_session.list_prompts()
-    guidelines_prompt = next(
-        (p for p in prompts.prompts if p.name == "wecom_message_guidelines"), None
-    )
+    guidelines_prompt = next((p for p in prompts.prompts if p.name == "wecom_message_guidelines"), None)
 
     assert guidelines_prompt is not None
     assert guidelines_prompt.description is not None

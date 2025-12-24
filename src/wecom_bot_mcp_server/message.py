@@ -72,7 +72,7 @@ def get_markdown_capabilities_resource() -> str:
         "**IMPORTANT**: Choose the correct msg_type based on your content:\n\n"
         "### Use `markdown` when:\n"
         "- Content contains user mentions using `<@userid>` syntax\n"
-        "- Content uses font colors: `<font color=\"info|comment|warning\">text</font>`\n"
+        '- Content uses font colors: `<font color="info|comment|warning">text</font>`\n'
         "- You need to @mention specific users in the message\n\n"
         "### Use `markdown_v2` when:\n"
         "- Content contains tables (using | columns |)\n"
@@ -126,7 +126,7 @@ def wecom_message_guidelines() -> str:
         "### Use `markdown` when:\n"
         "- **Content contains @mentions**: If you need to mention users with `<@userid>` syntax, "
         "you MUST use `markdown` type. The `<@userid>` syntax ONLY works in `markdown` type.\n"
-        "- **Content uses font colors**: `<font color=\"info|comment|warning\">text</font>`\n"
+        '- **Content uses font colors**: `<font color="info|comment|warning">text</font>`\n'
         "- Example: `<@john_doe> Please review this report` → use `markdown`\n\n"
         "### Use `markdown_v2` when:\n"
         "- Content contains **tables** (using | columns |)\n"
@@ -393,7 +393,7 @@ async def send_message_mcp(
             description=(
                 "Message type. Choose based on content:\n"
                 "- 'markdown': Use when content contains <@userid> mentions or "
-                "<font color=\"...\">text</font> colors. The <@userid> syntax ONLY works in markdown type.\n"
+                '<font color="...">text</font> colors. The <@userid> syntax ONLY works in markdown type.\n'
                 "- 'markdown_v2': Use for tables, lists, embedded images ![alt](url), "
                 "URLs with underscores, or general formatted content. This is the default.\n"
                 "Quick rule: If content has <@userid> → use 'markdown', otherwise → use 'markdown_v2'"
