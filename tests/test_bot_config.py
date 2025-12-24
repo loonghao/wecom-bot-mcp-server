@@ -189,106 +189,71 @@ class TestBotRegistry:
 class TestMultiBotInstructions:
     """Tests for multi-bot instruction generation."""
 
-    @pytest.fixture
-    def clean_registry(self):
-        """Fixture to clean bot registry and environment variables."""
-        # Import local modules
-        import wecom_bot_mcp_server.bot_config as bc
-
-        # Save original registry
-        original_registry = bc._bot_registry
-
-        # Clean all WECOM env vars
-        env_vars_to_clean = [k for k in os.environ if k.startswith("WECOM_")]
-        original_env = {k: os.environ.get(k) for k in env_vars_to_clean}
-        for k in env_vars_to_clean:
-            del os.environ[k]
-
-        # Reset registry
-        bc._bot_registry = None
-
-        yield bc
-
-        # Restore environment
-        for k in [k for k in os.environ if k.startswith("WECOM_")]:
-            del os.environ[k]
-        for k, v in original_env.items():
-            if v is not None:
-                os.environ[k] = v
-
-        # Restore registry
-        bc._bot_registry = original_registry
-
-    def test_no_bots_instructions(self, clean_registry):
+    def test_no_bots_instructions(self):
         """Test instructions when no bots configured."""
-        instructions = get_multi_bot_instructions()
-        assert "No WeCom bots are configured" in instructions
+        mock_registry = BotRegistry()
+        # Don't load any bots - empty registry
+        mock_registry._loaded = True  # Prevent auto-loading
 
-    def test_single_bot_instructions(self, clean_registry):
+        with patch("wecom_bot_mcp_server.bot_config.get_bot_registry", return_value=mock_registry):
+            instructions = get_multi_bot_instructions()
+            assert "No WeCom bots are configured" in instructions
+
+    def test_single_bot_instructions(self):
         """Test instructions with single bot."""
-        bc = clean_registry
-        # Set env var and reset registry to pick up new env
-        os.environ["WECOM_WEBHOOK_URL"] = "https://example.com/default"
-        bc._bot_registry = None
+        mock_registry = BotRegistry()
+        mock_registry._loaded = True
+        mock_registry._bots["default"] = BotConfig(
+            name="default",
+            webhook_url="https://example.com/default",
+            description="Default bot",
+        )
 
-        instructions = get_multi_bot_instructions()
-        assert "One WeCom bot is configured" in instructions
+        with patch("wecom_bot_mcp_server.bot_config.get_bot_registry", return_value=mock_registry):
+            instructions = get_multi_bot_instructions()
+            assert "One WeCom bot is configured" in instructions
 
-    def test_multiple_bots_instructions(self, clean_registry):
+    def test_multiple_bots_instructions(self):
         """Test instructions with multiple bots."""
-        bc = clean_registry
-        # Set env vars and reset registry to pick up new env
-        os.environ["WECOM_WEBHOOK_URL"] = "https://example.com/default"
-        os.environ["WECOM_BOT_ALERT_URL"] = "https://example.com/alert"
-        bc._bot_registry = None
+        mock_registry = BotRegistry()
+        mock_registry._loaded = True
+        mock_registry._bots["default"] = BotConfig(
+            name="default",
+            webhook_url="https://example.com/default",
+            description="Default bot",
+        )
+        mock_registry._bots["alert"] = BotConfig(
+            name="alert",
+            webhook_url="https://example.com/alert",
+            description="Alert bot",
+        )
 
-        instructions = get_multi_bot_instructions()
-        assert "Multiple WeCom Bots Available" in instructions
-        assert "bot_id" in instructions
+        with patch("wecom_bot_mcp_server.bot_config.get_bot_registry", return_value=mock_registry):
+            instructions = get_multi_bot_instructions()
+            assert "Multiple WeCom Bots Available" in instructions
+            assert "bot_id" in instructions
 
 
 class TestListAvailableBots:
     """Tests for list_available_bots function."""
 
-    @pytest.fixture
-    def clean_registry(self):
-        """Fixture to clean bot registry and environment variables."""
-        # Import local modules
-        import wecom_bot_mcp_server.bot_config as bc
-
-        # Save original registry
-        original_registry = bc._bot_registry
-
-        # Clean all WECOM env vars
-        env_vars_to_clean = [k for k in os.environ if k.startswith("WECOM_")]
-        original_env = {k: os.environ.get(k) for k in env_vars_to_clean}
-        for k in env_vars_to_clean:
-            del os.environ[k]
-
-        # Reset registry
-        bc._bot_registry = None
-
-        yield bc
-
-        # Restore environment
-        for k in [k for k in os.environ if k.startswith("WECOM_")]:
-            del os.environ[k]
-        for k, v in original_env.items():
-            if v is not None:
-                os.environ[k] = v
-
-        # Restore registry
-        bc._bot_registry = original_registry
-
-    def test_list_available_bots(self, clean_registry):
+    def test_list_available_bots(self):
         """Test listing available bots."""
-        bc = clean_registry
-        # Set env vars and reset registry to pick up new env
-        os.environ["WECOM_WEBHOOK_URL"] = "https://example.com/default"
-        os.environ["WECOM_BOT_ALERT_URL"] = "https://example.com/alert"
-        bc._bot_registry = None
+        mock_registry = BotRegistry()
+        mock_registry._loaded = True
+        mock_registry._bots["default"] = BotConfig(
+            name="default",
+            webhook_url="https://example.com/default",
+            description="Default bot",
+        )
+        mock_registry._bots["alert"] = BotConfig(
+            name="alert",
+            webhook_url="https://example.com/alert",
+            description="Alert bot",
+        )
 
-        bots = list_available_bots()
-        assert len(bots) == 2
-        assert any(b["id"] == "default" for b in bots)
-        assert any(b["id"] == "alert" for b in bots)
+        with patch("wecom_bot_mcp_server.bot_config.get_bot_registry", return_value=mock_registry):
+            bots = list_available_bots()
+            assert len(bots) == 2
+            assert any(b["id"] == "default" for b in bots)
+            assert any(b["id"] == "alert" for b in bots)
