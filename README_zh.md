@@ -19,10 +19,11 @@
 ## 功能特点
 
 - 支持多种消息类型：
-  - 文本消息
-  - Markdown 消息
-  - 图片消息（base64）
+  - Markdown 消息（支持@提及和字体颜色）
+  - Markdown V2 消息（支持表格、列表、嵌入图片）
+  - 图片消息（base64/本地文件/URL）
   - 文件消息
+  - 模板卡片消息（text_notice 和 news_notice）
 - **多机器人支持**：配置和使用多个企业微信机器人
 - 支持@用户（通过用户ID或手机号）
 - 消息历史记录
@@ -195,15 +196,25 @@ ASSISTANT: "好的，我来发送图片"
 服务器提供以下工具供 AI 助手使用：
 
 1. **send_message** - 发送文本或 Markdown 消息
-   - 参数：`content`、`msg_type`（text/markdown）、`mentioned_list`、`mentioned_mobile_list`、`bot_id`
+   - 参数：`content`、`msg_type`（markdown/markdown_v2）、`mentioned_list`、`mentioned_mobile_list`、`bot_id`
+   - `markdown`：当内容包含 `<@userid>` 提及或字体颜色时使用。`<@userid>` 是企业微信官方的提及语法，可避免与邮箱地址（如 `@user@email.com`）冲突
+   - `markdown_v2`：用于表格、列表、嵌入图片或一般内容（默认）
 
-2. **send_file** - 发送文件到企业微信
+2. **send_wecom_file** - 发送文件到企业微信
    - 参数：`file_path`、`bot_id`
 
-3. **send_image** - 发送图片到企业微信
+3. **send_wecom_image** - 发送图片到企业微信
    - 参数：`image_path`（本地路径或 URL）、`bot_id`
 
-4. **list_wecom_bots** - 列出所有已配置的机器人
+4. **send_wecom_template_card_text_notice** - 发送文本通知模板卡片
+   - 参数：`template_card_source`、`template_card_main_title`、`template_card_card_action`、`bot_id` 及可选字段
+   - 用于带有强调内容、引用和操作按钮的通知
+
+5. **send_wecom_template_card_news_notice** - 发送图文通知模板卡片
+   - 参数：`template_card_source`、`template_card_main_title`、`template_card_card_action`、`template_card_image`、`bot_id` 及可选字段
+   - 用于带有图片和丰富内容的新闻样式通知
+
+6. **list_wecom_bots** - 列出所有已配置的机器人
    - 返回：可用机器人列表，包含 ID、名称和描述
 
 ### 多机器人使用示例
@@ -229,12 +240,26 @@ ASSISTANT: "好的，我会发送通知到 CI 机器人"
 [助手将使用 send_message 并设置 bot_id="ci"]
 ```
 
+**场景八：发送模板卡片通知**
+```
+USER: "发送一个部署成功的通知卡片，带有跳转到仪表板的链接"
+ASSISTANT: "好的，我会发送模板卡片通知"
+[助手将使用 send_wecom_template_card_text_notice 工具]
+```
+
+**场景九：发送图文通知**
+```
+USER: "发送一个关于新功能发布的图文卡片，带有图片"
+ASSISTANT: "好的，我会发送图文通知卡片"
+[助手将使用 send_wecom_template_card_news_notice 工具]
+```
+
 ### 开发者：直接 API 使用
 
 如果你想在 Python 代码中直接使用此包（而不是作为 MCP 服务器）：
 
 ```python
-from wecom_bot_mcp_server import send_message, send_wecom_file, send_wecom_image
+from wecom_bot_mcp_server import send_message, send_wecom_file, send_wecom_image, send_wecom_template_card
 
 # 发送 markdown 消息（使用默认机器人）
 await send_message(
@@ -242,24 +267,30 @@ await send_message(
     msg_type="markdown"
 )
 
-# 发送文本消息并提及用户
+# 发送 markdown_v2 消息，支持表格和列表（默认）
 await send_message(
-    content="Hello @user1 @user2",
-    msg_type="text",
+    content="| 列1 | 列2 |\n|-----|-----|\n| 值1 | 值2 |",
+    msg_type="markdown_v2"
+)
+
+# 发送消息并提及用户（使用 markdown 以支持@提及）
+await send_message(
+    content="Hello <@user1> <@user2>",
+    msg_type="markdown",
     mentioned_list=["user1", "user2"]
 )
 
 # 发送消息到指定机器人
 await send_message(
     content="构建成功完成！",
-    msg_type="markdown",
+    msg_type="markdown_v2",
     bot_id="ci"  # 发送到 CI 机器人
 )
 
 # 发送告警到告警机器人
 await send_message(
     content="⚠️ 检测到高 CPU 使用率！",
-    msg_type="markdown",
+    msg_type="markdown_v2",
     bot_id="alert"
 )
 
@@ -268,6 +299,16 @@ await send_wecom_file("/path/to/file.txt", bot_id="ci")
 
 # 发送图片到指定机器人
 await send_wecom_image("/path/to/image.png", bot_id="alert")
+
+# 发送模板卡片（text_notice）
+await send_wecom_template_card(
+    template_card_type="text_notice",
+    template_card_source={"icon_url": "https://example.com/icon.png", "desc": "系统"},
+    template_card_main_title={"title": "部署成功", "desc": "生产环境"},
+    template_card_card_action={"type": 1, "url": "https://example.com/dashboard"},
+    template_card_emphasis_content={"title": "100%", "desc": "成功率"},
+    bot_id="ci"
+)
 ```
 
 ### 代码中的多机器人配置
@@ -364,18 +405,23 @@ wecom-bot-mcp-server/
 ├── src/
 │   └── wecom_bot_mcp_server/
 │       ├── __init__.py
-│       ├── server.py
-│       ├── message.py
-│       ├── file.py
-│       ├── image.py
-│       ├── bot_config.py   # 多机器人配置
-│       ├── utils.py
-│       └── errors.py
+│       ├── __main__.py
+│       ├── __version__.py
+│       ├── app.py           # FastMCP 应用配置
+│       ├── server.py        # 服务器入口
+│       ├── message.py       # 消息和模板卡片处理
+│       ├── file.py          # 文件上传处理
+│       ├── image.py         # 图片上传处理
+│       ├── bot_config.py    # 多机器人配置
+│       ├── utils.py         # 工具函数
+│       ├── log_config.py    # 日志配置
+│       └── errors.py        # 错误定义
 ├── tests/
 │   ├── test_server.py
 │   ├── test_message.py
 │   ├── test_file.py
-│   └── test_image.py
+│   ├── test_image.py
+│   └── test_bot_config.py
 ├── docs/
 ├── pyproject.toml
 ├── noxfile.py
