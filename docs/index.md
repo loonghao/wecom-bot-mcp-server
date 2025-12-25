@@ -70,3 +70,42 @@ uvx wecom-bot-mcp-server
   }
 }
 ```
+
+## Multi-Bot Configuration
+
+Configure multiple bots for different purposes (alerts, CI/CD, team updates):
+
+::: code-group
+
+```json [MCP Client Config]
+{
+  "mcpServers": {
+    "wecom": {
+      "command": "uvx",
+      "args": ["wecom-bot-mcp-server"],
+      "env": {
+        "WECOM_WEBHOOK_URL": "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=default",
+        "WECOM_BOTS": "{\"alert\": {\"name\": \"Alert Bot\", \"webhook_url\": \"https://...?key=alert\"}, \"ci\": {\"name\": \"CI Bot\", \"webhook_url\": \"https://...?key=ci\"}}"
+      }
+    }
+  }
+}
+```
+
+```bash [Environment Variables]
+# JSON configuration (recommended)
+export WECOM_BOTS='{
+  "alert": {"name": "Alert Bot", "webhook_url": "https://...?key=alert"},
+  "ci": {"name": "CI Bot", "webhook_url": "https://...?key=ci"}
+}'
+
+# Or individual variables
+export WECOM_BOT_ALERT_URL="https://...?key=alert"
+export WECOM_BOT_CI_URL="https://...?key=ci"
+```
+
+:::
+
+::: tip
+Use `list_wecom_bots` tool to discover all configured bots. [Learn more →](/guide/multi-bot)
+:::
