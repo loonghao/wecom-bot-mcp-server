@@ -70,3 +70,42 @@ uvx wecom-bot-mcp-server
   }
 }
 ```
+
+## 多机器人配置
+
+配置多个机器人用于不同用途（告警、CI/CD、团队通知）：
+
+::: code-group
+
+```json [MCP 客户端配置]
+{
+  "mcpServers": {
+    "wecom": {
+      "command": "uvx",
+      "args": ["wecom-bot-mcp-server"],
+      "env": {
+        "WECOM_WEBHOOK_URL": "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=default",
+        "WECOM_BOTS": "{\"alert\": {\"name\": \"告警机器人\", \"webhook_url\": \"https://...?key=alert\"}, \"ci\": {\"name\": \"CI 机器人\", \"webhook_url\": \"https://...?key=ci\"}}"
+      }
+    }
+  }
+}
+```
+
+```bash [环境变量]
+# JSON 配置（推荐）
+export WECOM_BOTS='{
+  "alert": {"name": "告警机器人", "webhook_url": "https://...?key=alert"},
+  "ci": {"name": "CI 机器人", "webhook_url": "https://...?key=ci"}
+}'
+
+# 或使用独立变量
+export WECOM_BOT_ALERT_URL="https://...?key=alert"
+export WECOM_BOT_CI_URL="https://...?key=ci"
+```
+
+:::
+
+::: tip
+使用 `list_wecom_bots` 工具查看所有已配置的机器人。[了解更多 →](/zh/guide/multi-bot)
+:::
