@@ -106,6 +106,10 @@ export WECOM_BOT_CI_URL="https://...?key=ci"
 
 :::
 
-::: tip
+::: tip JSON 转义工具
+`WECOM_BOTS` 的值需要进行 JSON 转义。可使用以下在线工具转换：
+- [JSON Escape/Unescape](https://www.freeformatter.com/json-escape.html)
+- [JSON String Escape](https://jsontostring.com/)
+
 使用 `list_wecom_bots` 工具查看所有已配置的机器人。[了解更多 →](/zh/guide/multi-bot)
 :::

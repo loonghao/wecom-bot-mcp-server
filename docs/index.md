@@ -106,6 +106,10 @@ export WECOM_BOT_CI_URL="https://...?key=ci"
 
 :::
 
-::: tip
+::: tip JSON Escape Tools
+The `WECOM_BOTS` value requires JSON escaping. Use these online tools to convert your JSON:
+- [JSON Escape/Unescape](https://www.freeformatter.com/json-escape.html)
+- [JSON String Escape](https://jsontostring.com/)
+
 Use `list_wecom_bots` tool to discover all configured bots. [Learn more →](/guide/multi-bot)
 :::
