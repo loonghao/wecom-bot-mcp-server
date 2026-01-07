@@ -413,17 +413,38 @@ async def send_message_mcp(
         MessageType,
         Field(
             description=(
-                "Message type. Choose based on content:\n"
-                "- 'markdown': Use when content contains <@userid> mentions or "
-                '<font color="...">text</font> colors. The <@userid> syntax ONLY works in markdown type.\n'
+                "Message type. CRITICAL: Choose based on whether content contains @mentions:\n"
+                "- 'markdown': MUST use when content contains <@userid> mentions (e.g., <@zhangsan>). "
+                "Also use for <font color='...'>text</font> colors.\n"
                 "- 'markdown_v2': Use for tables, lists, embedded images ![alt](url), "
-                "URLs with underscores, or general formatted content. This is the default.\n"
-                "Quick rule: If content has <@userid> → use 'markdown', otherwise → use 'markdown_v2'"
+                "URLs with underscores, or general content WITHOUT mentions.\n\n"
+                "IMPORTANT RULE: If you need to @mention someone, you MUST:\n"
+                "1. Add <@userid> syntax in the content (e.g., 'Hi <@alice>, please review')\n"
+                "2. Set msg_type='markdown' (NOT markdown_v2!)\n\n"
+                "The <@userid> mention syntax ONLY works with msg_type='markdown'!"
             )
         ),
     ] = "markdown_v2",
-    mentioned_list: Annotated[list[str], Field(description="List of user IDs to mention")] = [],
-    mentioned_mobile_list: Annotated[list[str], Field(description="List of mobile numbers to mention")] = [],
+    mentioned_list: Annotated[
+        list[str],
+        Field(
+            description=(
+                "List of user IDs to mention. Only effective for msg_type='text'.\n"
+                "For markdown messages, use <@userid> syntax directly in content instead.\n"
+                "User ID format: lowercase pinyin for Chinese names (e.g., 'zhangsan'), "
+                "lowercase for English names (e.g., 'alice')."
+            )
+        ),
+    ] = [],
+    mentioned_mobile_list: Annotated[
+        list[str],
+        Field(
+            description=(
+                "List of mobile numbers to mention. Only effective for msg_type='text'.\n"
+                "Format: Phone numbers without country code (e.g., '13800138000')."
+            )
+        ),
+    ] = [],
     bot_id: Annotated[
         str | None,
         Field(
@@ -435,14 +456,25 @@ async def send_message_mcp(
         ),
     ] = None,
 ) -> dict[str, str]:
-    """Send message to WeCom.
+    """Send message to WeCom with optional @mentions.
+
+    MENTION USERS:
+    When users want to notify/remind/cc someone, convert their intent to <@userid> syntax:
+    - "remind Zhang San" → Add <@zhangsan> in content, use msg_type='markdown'
+    - "notify @alice and @bob" → Add <@alice> <@bob> in content, use msg_type='markdown'
+    - "let everyone know" → Add <@all> in content, use msg_type='markdown'
+
+    User ID conventions:
+    - Chinese names → pinyin: "张三" → "zhangsan", "李四" → "lisi"
+    - English names → lowercase: "Alice" → "alice"
+    - Explicit usernames → preserve: "@zhangwei" → "zhangwei"
 
     Args:
-        content: Message content to send
-        msg_type: Message type. Use 'markdown' for @mentions (<@userid>), use 'markdown_v2' for
-            tables, lists, images, or general content.
-        mentioned_list: List of user IDs to mention
-        mentioned_mobile_list: List of mobile numbers to mention
+        content: Message content. Include <@userid> for mentions in markdown mode.
+            Examples: "Hi <@zhangsan>, please review!" or "<@all> Team meeting at 3 PM"
+        msg_type: Message type. Use 'markdown' for @mentions, 'markdown_v2' for general content.
+        mentioned_list: User IDs to mention (only for text messages).
+        mentioned_mobile_list: Mobile numbers to mention (only for text messages).
         bot_id: Bot identifier for multi-bot setups. If None, uses the default bot.
 
     Returns:

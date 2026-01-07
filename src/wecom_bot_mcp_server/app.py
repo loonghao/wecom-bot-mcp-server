@@ -7,6 +7,48 @@ from mcp.server.fastmcp import FastMCP
 APP_NAME = "wecom_bot_mcp_server"
 APP_DESCRIPTION = """WeCom Bot MCP Server for sending messages and files to WeCom groups.
 
+## Mentioning Users (@Users)
+
+When users want to mention/notify/remind specific people in messages, you MUST intelligently
+convert natural language mentions to WeCom's `<@userid>` syntax.
+
+### Automatic Mention Detection
+
+When user says things like:
+- "remind Zhang San and Li Si" → Convert to `<@zhangsan> <@lisi>` in content
+- "notify @alice and @bob" → Convert to `<@alice> <@bob>` in content
+- "cc wangwu, zhaoliu" → Convert to `<@wangwu> <@zhaoliu>` in content
+- "let the team know" or "everyone" → Convert to `<@all>` in content
+- "@all members" → Convert to `<@all>` in content
+
+### Mention Syntax Rules
+
+1. **For markdown messages**: Use `<@userid>` syntax DIRECTLY in the content
+   - Example: "Hello <@zhangsan>, please review this!"
+   - IMPORTANT: When content contains `<@userid>`, you MUST use `msg_type="markdown"`
+
+2. **For text messages**: Use `mentioned_list` parameter
+   - Example: `mentioned_list=["zhangsan", "lisi"]`
+
+3. **User ID conventions**:
+   - Convert Chinese names to pinyin: "张三" → "zhangsan", "李四" → "lisi"
+   - Keep English names lowercase: "Alice" → "alice", "Bob" → "bob"
+   - Preserve usernames if explicitly provided: "@zhangwei" → "zhangwei"
+
+### Examples
+
+User: "Send a message reminding wangwu and zhaoliu to review the PR"
+→ Content: "Hi <@wangwu> <@zhaoliu>, please review the PR."
+→ msg_type: "markdown" (MUST use markdown when content has <@userid>)
+
+User: "Notify everyone about the meeting"
+→ Content: "<@all> Meeting reminder: Team sync at 3 PM"
+→ msg_type: "markdown"
+
+User: "Send this to Zhang San: the report is ready"
+→ Content: "Hi <@zhangsan>, the report is ready."
+→ msg_type: "markdown"
+
 ## Multi-Bot Support
 
 This server supports multiple WeCom bot configurations. You can send messages to different
