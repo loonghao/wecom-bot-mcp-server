@@ -1,3 +1,9 @@
+## v0.11.0 (2026-01-30)
+
+### Feat
+
+- **prompts**: enhance MCP prompts for intelligent @mention user detection
+
 ## v0.10.2 (2025-12-24)
 
 ### Fix
