@@ -67,11 +67,14 @@ def get_webhook_url_for_bot(bot_id: str | None = None) -> str:
     return get_bot_registry().get_webhook_url(bot_id)
 
 
+@lru_cache(maxsize=1)
 def get_allowed_root() -> Path:
     """Get the allowed root directory for file operations.
 
     Reads WECOM_MCP_ALLOWED_ROOT from the environment. If not set,
     defaults to the current working directory.
+
+    Cached: the allowed root does not change at runtime.
 
     Returns:
         Path: The resolved allowed root directory.

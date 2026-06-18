@@ -156,6 +156,7 @@ def test_get_allowed_root_from_env():
     """Test get_allowed_root reads WECOM_MCP_ALLOWED_ROOT from env."""
     with tempfile.TemporaryDirectory() as tmpdir:
         with patch.dict(os.environ, {"WECOM_MCP_ALLOWED_ROOT": tmpdir}, clear=False):
+            get_allowed_root.cache_clear()
             root = get_allowed_root()
             assert root == Path(tmpdir).resolve()
 
@@ -165,6 +166,7 @@ def test_get_allowed_root_defaults_to_cwd():
     with patch.dict(os.environ, {}, clear=False):
         if "WECOM_MCP_ALLOWED_ROOT" in os.environ:
             del os.environ["WECOM_MCP_ALLOWED_ROOT"]
+        get_allowed_root.cache_clear()
         root = get_allowed_root()
         assert root == Path.cwd().resolve()
 
@@ -174,6 +176,7 @@ def test_ensure_within_allowed_root_accepts_file_inside_root():
     with tempfile.TemporaryDirectory() as tmpdir:
         root = str(Path(tmpdir).resolve())
         with patch.dict(os.environ, {"WECOM_MCP_ALLOWED_ROOT": root}):
+            get_allowed_root.cache_clear()
             test_file = os.path.join(tmpdir, "test.txt")
             with open(test_file, "w") as f:
                 f.write("content")
@@ -185,6 +188,7 @@ def test_ensure_within_allowed_root_rejects_path_outside_root():
     """Test ensure_within_allowed_root rejects a path outside the allowed root."""
     with tempfile.TemporaryDirectory() as tmpdir:
         with patch.dict(os.environ, {"WECOM_MCP_ALLOWED_ROOT": tmpdir}):
+            get_allowed_root.cache_clear()
             outside = "/etc/passwd"
             with pytest.raises(WeComError) as exc_info:
                 ensure_within_allowed_root(outside)
@@ -196,6 +200,7 @@ def test_ensure_within_allowed_root_rejects_parent_traversal():
     """Test ensure_within_allowed_root rejects .. traversal from within root."""
     with tempfile.TemporaryDirectory() as tmpdir:
         with patch.dict(os.environ, {"WECOM_MCP_ALLOWED_ROOT": tmpdir}):
+            get_allowed_root.cache_clear()
             traversal = os.path.join(tmpdir, "..", "etc", "passwd")
             with pytest.raises(WeComError) as exc_info:
                 ensure_within_allowed_root(traversal)
@@ -206,6 +211,7 @@ def test_ensure_within_allowed_root_accepts_subdirectory():
     """Test ensure_within_allowed_root accepts files in subdirectories."""
     with tempfile.TemporaryDirectory() as tmpdir:
         with patch.dict(os.environ, {"WECOM_MCP_ALLOWED_ROOT": tmpdir}):
+            get_allowed_root.cache_clear()
             subdir = os.path.join(tmpdir, "subdir")
             os.makedirs(subdir)
             test_file = os.path.join(subdir, "nested.txt")
@@ -213,3 +219,35 @@ def test_ensure_within_allowed_root_accepts_subdirectory():
                 f.write("nested")
             result = ensure_within_allowed_root(test_file)
             assert result == Path(test_file).resolve()
+
+
+def test_ensure_within_allowed_root_rejects_symlink_escape():
+    """Test ensure_within_allowed_root rejects a symlink pointing outside root.
+
+    A symlink inside the allowed root that resolves to a file outside
+    the root must be rejected — this prevents symlink-based path
+    traversal attacks.
+    """
+    with tempfile.TemporaryDirectory() as tmpdir:
+        root = str(Path(tmpdir).resolve())
+        # Create a file outside the allowed root
+        outside_file = os.path.join(tempfile.gettempdir(), "sensitive.txt")
+        with open(outside_file, "w") as f:
+            f.write("secret")
+
+        # Create a symlink inside the allowed root pointing outside
+        symlink = os.path.join(tmpdir, "escape_link.txt")
+        try:
+            os.symlink(outside_file, symlink)
+        except OSError:
+            pytest.skip("Symlink creation not available (insufficient privileges)")
+
+        with patch.dict(os.environ, {"WECOM_MCP_ALLOWED_ROOT": root}):
+            get_allowed_root.cache_clear()
+            with pytest.raises(WeComError) as exc_info:
+                ensure_within_allowed_root(symlink)
+            assert exc_info.value.error_code == ErrorCode.PATH_TRAVERSAL_ERROR
+            assert "outside the allowed root directory" in str(exc_info.value)
+
+        # Cleanup
+        os.unlink(outside_file)
