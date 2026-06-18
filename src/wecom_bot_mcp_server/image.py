@@ -20,6 +20,7 @@ from wecom_bot_mcp_server.app import mcp
 from wecom_bot_mcp_server.bot_config import get_bot_registry
 from wecom_bot_mcp_server.errors import ErrorCode
 from wecom_bot_mcp_server.errors import WeComError
+from wecom_bot_mcp_server.utils import ensure_within_allowed_root
 
 
 async def download_image(url: str, ctx: Context | None = None) -> Path:
@@ -165,6 +166,9 @@ async def _process_image_path(image_path: str | Path, ctx: Context | None = None
             await ctx.error(error_msg)
         raise WeComError(error_msg, ErrorCode.FILE_ERROR)
 
+    # Confine the path to the allowed root (prevents path traversal / CWE-22)
+    image_path = ensure_within_allowed_root(image_path)
+
     # Validate image format
     try:
         Image.open(image_path)
@@ -272,7 +276,17 @@ async def _process_image_response(response: Any, image_path: Path, ctx: Context 
 
 @mcp.tool(name="send_wecom_image")
 async def send_wecom_image_mcp(
-    image_path: Annotated[str, Field(description="Path to the image file to send")],
+    image_path: Annotated[
+        str,
+        Field(
+            description=(
+                "Path to the image file to send (local file path or HTTP(S) URL). "
+                "For local paths, the file MUST be within the allowed root directory "
+                "(set via WECOM_MCP_ALLOWED_ROOT env var, defaults to CWD). "
+                "Paths outside this directory are rejected for security."
+            )
+        ),
+    ],
     bot_id: Annotated[
         str | None,
         Field(
