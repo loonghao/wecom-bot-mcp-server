@@ -1,3 +1,13 @@
+## v0.11.1 (2026-06-18)
+
+### Fix
+
+- add path confinement to prevent arbitrary file exfiltration via send_wecom_file (CWE-22)
+
+### Perf
+
+- add lru_cache to get_allowed_root and symlink escape test
+
 ## v0.11.0 (2026-01-30)
 
 ### Feat
