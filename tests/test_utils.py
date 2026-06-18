@@ -2,14 +2,19 @@
 
 # Import built-in modules
 import os
+from pathlib import Path
+import tempfile
 from unittest.mock import patch
 
 # Import third-party modules
 import pytest
 
 # Import local modules
+from wecom_bot_mcp_server.errors import ErrorCode
 from wecom_bot_mcp_server.errors import WeComError
 from wecom_bot_mcp_server.utils import encode_text
+from wecom_bot_mcp_server.utils import ensure_within_allowed_root
+from wecom_bot_mcp_server.utils import get_allowed_root
 from wecom_bot_mcp_server.utils import get_webhook_url
 
 
@@ -142,3 +147,69 @@ def test_encode_text_error(mock_get_logger):
 
         # Verify error was logged
         mock_logger.error.assert_called_once()
+
+
+# --- Path confinement tests ---
+
+
+def test_get_allowed_root_from_env():
+    """Test get_allowed_root reads WECOM_MCP_ALLOWED_ROOT from env."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        with patch.dict(os.environ, {"WECOM_MCP_ALLOWED_ROOT": tmpdir}, clear=False):
+            root = get_allowed_root()
+            assert root == Path(tmpdir).resolve()
+
+
+def test_get_allowed_root_defaults_to_cwd():
+    """Test get_allowed_root defaults to CWD when env var is not set."""
+    with patch.dict(os.environ, {}, clear=False):
+        if "WECOM_MCP_ALLOWED_ROOT" in os.environ:
+            del os.environ["WECOM_MCP_ALLOWED_ROOT"]
+        root = get_allowed_root()
+        assert root == Path.cwd().resolve()
+
+
+def test_ensure_within_allowed_root_accepts_file_inside_root():
+    """Test ensure_within_allowed_root accepts a file inside the allowed root."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        root = str(Path(tmpdir).resolve())
+        with patch.dict(os.environ, {"WECOM_MCP_ALLOWED_ROOT": root}):
+            test_file = os.path.join(tmpdir, "test.txt")
+            with open(test_file, "w") as f:
+                f.write("content")
+            result = ensure_within_allowed_root(test_file)
+            assert result == Path(test_file).resolve()
+
+
+def test_ensure_within_allowed_root_rejects_path_outside_root():
+    """Test ensure_within_allowed_root rejects a path outside the allowed root."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        with patch.dict(os.environ, {"WECOM_MCP_ALLOWED_ROOT": tmpdir}):
+            outside = "/etc/passwd"
+            with pytest.raises(WeComError) as exc_info:
+                ensure_within_allowed_root(outside)
+            assert exc_info.value.error_code == ErrorCode.PATH_TRAVERSAL_ERROR
+            assert "outside the allowed root directory" in str(exc_info.value)
+
+
+def test_ensure_within_allowed_root_rejects_parent_traversal():
+    """Test ensure_within_allowed_root rejects .. traversal from within root."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        with patch.dict(os.environ, {"WECOM_MCP_ALLOWED_ROOT": tmpdir}):
+            traversal = os.path.join(tmpdir, "..", "etc", "passwd")
+            with pytest.raises(WeComError) as exc_info:
+                ensure_within_allowed_root(traversal)
+            assert exc_info.value.error_code == ErrorCode.PATH_TRAVERSAL_ERROR
+
+
+def test_ensure_within_allowed_root_accepts_subdirectory():
+    """Test ensure_within_allowed_root accepts files in subdirectories."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        with patch.dict(os.environ, {"WECOM_MCP_ALLOWED_ROOT": tmpdir}):
+            subdir = os.path.join(tmpdir, "subdir")
+            os.makedirs(subdir)
+            test_file = os.path.join(subdir, "nested.txt")
+            with open(test_file, "w") as f:
+                f.write("nested")
+            result = ensure_within_allowed_root(test_file)
+            assert result == Path(test_file).resolve()

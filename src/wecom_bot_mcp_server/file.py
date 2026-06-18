@@ -16,6 +16,7 @@ from wecom_bot_mcp_server.app import mcp
 from wecom_bot_mcp_server.bot_config import get_bot_registry
 from wecom_bot_mcp_server.errors import ErrorCode
 from wecom_bot_mcp_server.errors import WeComError
+from wecom_bot_mcp_server.utils import ensure_within_allowed_root
 
 
 async def send_wecom_file(
@@ -100,6 +101,9 @@ async def _validate_file(file_path: str | Path, ctx: Context | None = None) -> P
         if ctx:
             await ctx.error(error_msg)
         raise WeComError(error_msg, ErrorCode.FILE_ERROR)
+
+    # Confine the path to the allowed root (prevents path traversal / CWE-22)
+    file_path = ensure_within_allowed_root(file_path)
 
     return file_path
 
@@ -213,7 +217,17 @@ async def _process_file_response(response: Any, file_path: Path, ctx: Context | 
 
 @mcp.tool(name="send_wecom_file")
 async def send_wecom_file_mcp(
-    file_path: Annotated[str, Field(description="Path to the file to send")],
+    file_path: Annotated[
+        str,
+        Field(
+            description=(
+                "Path to the file to send. The file MUST be located within the allowed "
+                "root directory (set via WECOM_MCP_ALLOWED_ROOT env var, defaults to the "
+                "current working directory). Paths outside this directory are rejected "
+                "for security."
+            )
+        ),
+    ],
     bot_id: Annotated[
         str | None,
         Field(

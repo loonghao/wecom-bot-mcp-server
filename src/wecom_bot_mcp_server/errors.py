@@ -13,6 +13,7 @@ class ErrorCode(Enum):
     NETWORK_ERROR = auto()
     API_FAILURE = auto()
     FILE_ERROR = auto()
+    PATH_TRAVERSAL_ERROR = auto()
 
 
 class WeComError(Exception):

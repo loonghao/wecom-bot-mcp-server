@@ -4,6 +4,7 @@
 from functools import lru_cache
 import logging
 import os
+from pathlib import Path
 
 # Import third-party modules
 import ftfy
@@ -64,6 +65,57 @@ def get_webhook_url_for_bot(bot_id: str | None = None) -> str:
     from wecom_bot_mcp_server.bot_config import get_bot_registry
 
     return get_bot_registry().get_webhook_url(bot_id)
+
+
+def get_allowed_root() -> Path:
+    """Get the allowed root directory for file operations.
+
+    Reads WECOM_MCP_ALLOWED_ROOT from the environment. If not set,
+    defaults to the current working directory.
+
+    Returns:
+        Path: The resolved allowed root directory.
+
+    """
+    root = os.getenv("WECOM_MCP_ALLOWED_ROOT")
+    if root:
+        return Path(root).resolve()
+    return Path.cwd().resolve()
+
+
+def ensure_within_allowed_root(file_path: str | Path) -> Path:
+    """Ensure a file path is within the allowed root directory.
+
+    Resolves the candidate path with realpath and verifies that it lies
+    inside the configured allowed root. This prevents path-traversal
+    attacks where an MCP client passes an arbitrary path to exfiltrate
+    files outside the intended directory.
+
+    Args:
+        file_path: The caller-supplied path to validate.
+
+    Returns:
+        Path: The resolved, confined path.
+
+    Raises:
+        WeComError: If the path escapes the allowed root.
+
+    """
+    allowed_root = get_allowed_root()
+    candidate = Path(file_path).resolve()
+
+    # is_relative_to requires Python >= 3.9
+    try:
+        candidate.relative_to(allowed_root)
+    except ValueError:
+        raise WeComError(
+            f"Path '{file_path}' is outside the allowed root directory "
+            f"'{allowed_root}'. Set WECOM_MCP_ALLOWED_ROOT to widen the "
+            f"allowed directory, or move the file inside '{allowed_root}'.",
+            ErrorCode.PATH_TRAVERSAL_ERROR,
+        ) from None
+
+    return candidate
 
 
 def encode_text(text: str, msg_type: str = "text") -> str:

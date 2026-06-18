@@ -121,8 +121,9 @@ def get_markdown_capabilities_resource() -> str:
         "## File sending recommendations\n"
         "- Use the send_wecom_file tool when sending non-image files such as "
         "reports, logs, or archives.\n"
-        "- Local file paths are acceptable for `file_path`; this server will upload the file to WeCom "
-        "via NotifyBridge and recipients will see it as an attached file message.\n"
+        "- File paths MUST be within the allowed root directory "
+        "(set by WECOM_MCP_ALLOWED_ROOT env var, defaults to CWD). "
+        "Paths outside this directory are rejected for security.\n"
     )
 
 
@@ -162,9 +163,10 @@ def wecom_message_guidelines() -> str:
         "- If the main content is an image file (local path or URL), "
         "call the `send_wecom_image` tool instead of embedding it in markdown.\n"
         "- If the user asks to send a non-image file (reports, logs, archives), "
-        "call the `send_wecom_file` tool with the local file path.\n"
-        "- It is safe to pass local file/image paths to these tools; this server will call NotifyBridge "
-        "to upload the file to WeCom so recipients can access it.\n"
+        "call the `send_wecom_file` tool with a file path inside the allowed root directory "
+        "(WECOM_MCP_ALLOWED_ROOT env var, defaults to CWD).\n"
+        "- File and image paths passed to these tools MUST be within the allowed root; "
+        "paths outside this directory are rejected for security.\n"
         "- URLs must be preserved exactly; do not change underscores or other "
         "characters inside URLs.\n\n"
     )
