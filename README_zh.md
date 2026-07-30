@@ -262,37 +262,23 @@ ASSISTANT: "好的，我会发送图文通知卡片"
 from wecom_bot_mcp_server import send_message, send_wecom_file, send_wecom_image, send_wecom_template_card
 
 # 发送 markdown 消息（使用默认机器人）
-await send_message(
-    content="**Hello World!**",
-    msg_type="markdown"
-)
+await send_message(content="**Hello World!**", msg_type="markdown")
 
 # 发送 markdown_v2 消息，支持表格和列表（默认）
-await send_message(
-    content="| 列1 | 列2 |\n|-----|-----|\n| 值1 | 值2 |",
-    msg_type="markdown_v2"
-)
+await send_message(content="| 列1 | 列2 |\n|-----|-----|\n| 值1 | 值2 |", msg_type="markdown_v2")
 
 # 发送消息并提及用户（使用 markdown 以支持@提及）
-await send_message(
-    content="Hello <@user1> <@user2>",
-    msg_type="markdown",
-    mentioned_list=["user1", "user2"]
-)
+await send_message(content="Hello <@user1> <@user2>", msg_type="markdown", mentioned_list=["user1", "user2"])
 
 # 发送消息到指定机器人
 await send_message(
     content="构建成功完成！",
     msg_type="markdown_v2",
-    bot_id="ci"  # 发送到 CI 机器人
+    bot_id="ci",  # 发送到 CI 机器人
 )
 
 # 发送告警到告警机器人
-await send_message(
-    content="⚠️ 检测到高 CPU 使用率！",
-    msg_type="markdown_v2",
-    bot_id="alert"
-)
+await send_message(content="⚠️ 检测到高 CPU 使用率！", msg_type="markdown_v2", bot_id="alert")
 
 # 发送文件到指定机器人
 await send_wecom_file("/path/to/file.txt", bot_id="ci")
@@ -307,7 +293,7 @@ await send_wecom_template_card(
     template_card_main_title={"title": "部署成功", "desc": "生产环境"},
     template_card_card_action={"type": 1, "url": "https://example.com/dashboard"},
     template_card_emphasis_content={"title": "100%", "desc": "成功率"},
-    bot_id="ci"
+    bot_id="ci",
 )
 ```
 

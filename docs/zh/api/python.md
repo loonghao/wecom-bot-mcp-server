@@ -14,8 +14,10 @@ pip install wecom-bot-mcp-server
 import asyncio
 from wecom_bot_mcp_server import send_message
 
+
 async def main():
     await send_message("来自 Python 的问候！", msg_type="text")
+
 
 asyncio.run(main())
 ```
@@ -53,38 +55,19 @@ async def send_message(
 await send_message("你好世界！")
 
 # Markdown 消息
-await send_message(
-    content="**粗体** 和 *斜体*",
-    msg_type="markdown"
-)
+await send_message(content="**粗体** 和 *斜体*", msg_type="markdown")
 
 # 带 @提及
-await send_message(
-    content="请审核这个",
-    msg_type="text",
-    mentioned_list=["user1", "user2"]
-)
+await send_message(content="请审核这个", msg_type="text", mentioned_list=["user1", "user2"])
 
 # 通过手机号提及
-await send_message(
-    content="紧急！",
-    msg_type="text",
-    mentioned_mobile_list=["13800138000"]
-)
+await send_message(content="紧急！", msg_type="text", mentioned_mobile_list=["13800138000"])
 
 # 提及所有人
-await send_message(
-    content="团队公告",
-    msg_type="text",
-    mentioned_list=["@all"]
-)
+await send_message(content="团队公告", msg_type="text", mentioned_list=["@all"])
 
 # 发送到指定机器人
-await send_message(
-    content="构建失败！",
-    msg_type="markdown",
-    bot_id="ci"
-)
+await send_message(content="构建失败！", msg_type="markdown", bot_id="ci")
 ```
 
 ### send_wecom_file
@@ -207,6 +190,7 @@ from wecom_bot_mcp_server.errors import WeComError
 os.environ["WECOM_WEBHOOK_URL"] = "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=xxx"
 os.environ["WECOM_BOT_ALERT_URL"] = "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=alert"
 
+
 async def main():
     # 列出可用机器人
     bots = list_available_bots()
@@ -219,18 +203,11 @@ async def main():
 
         # Markdown 到 CI 机器人
         await send_message(
-            content="## 构建状态\n- **结果**: 成功\n- **耗时**: 5分30秒",
-            msg_type="markdown",
-            bot_id="ci"
+            content="## 构建状态\n- **结果**: 成功\n- **耗时**: 5分30秒", msg_type="markdown", bot_id="ci"
         )
 
         # 带 @提及的告警
-        await send_message(
-            content="服务器 CPU > 90%！",
-            msg_type="text",
-            mentioned_list=["admin"],
-            bot_id="alert"
-        )
+        await send_message(content="服务器 CPU > 90%！", msg_type="text", mentioned_list=["admin"], bot_id="alert")
 
         # 发送文件
         await send_wecom_file("/path/to/report.pdf")
@@ -240,6 +217,7 @@ async def main():
 
     except WeComError as e:
         print(f"失败: {e.message}")
+
 
 if __name__ == "__main__":
     asyncio.run(main())

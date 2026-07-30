@@ -130,6 +130,7 @@ export WECOM_BOTS='{"ci": {"name": "CI 机器人", "webhook_url": "https://..."}
 或使用 Python：
 ```python
 from wecom_bot_mcp_server.bot_config import list_available_bots
+
 print(list_available_bots())
 ```
 

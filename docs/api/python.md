@@ -14,8 +14,10 @@ pip install wecom-bot-mcp-server
 import asyncio
 from wecom_bot_mcp_server import send_message
 
+
 async def main():
     await send_message("Hello from Python!", msg_type="text")
+
 
 asyncio.run(main())
 ```
@@ -53,38 +55,19 @@ async def send_message(
 await send_message("Hello World!")
 
 # Markdown message
-await send_message(
-    content="**Bold** and *italic*",
-    msg_type="markdown"
-)
+await send_message(content="**Bold** and *italic*", msg_type="markdown")
 
 # With @mentions
-await send_message(
-    content="Please review this",
-    msg_type="text",
-    mentioned_list=["user1", "user2"]
-)
+await send_message(content="Please review this", msg_type="text", mentioned_list=["user1", "user2"])
 
 # Mention by phone
-await send_message(
-    content="Urgent!",
-    msg_type="text",
-    mentioned_mobile_list=["13800138000"]
-)
+await send_message(content="Urgent!", msg_type="text", mentioned_mobile_list=["13800138000"])
 
 # Mention all
-await send_message(
-    content="Team announcement",
-    msg_type="text",
-    mentioned_list=["@all"]
-)
+await send_message(content="Team announcement", msg_type="text", mentioned_list=["@all"])
 
 # Send to specific bot
-await send_message(
-    content="Build failed!",
-    msg_type="markdown",
-    bot_id="ci"
-)
+await send_message(content="Build failed!", msg_type="markdown", bot_id="ci")
 ```
 
 ### send_wecom_file
@@ -203,12 +186,13 @@ Data class for bot configuration.
 ```python
 from wecom_bot_mcp_server.bot_config import BotConfig
 
+
 @dataclass
 class BotConfig:
-    name: str           # Human-readable name
-    webhook_url: str    # Webhook URL
-    description: str    # Optional description
-    metadata: dict      # Optional metadata
+    name: str  # Human-readable name
+    webhook_url: str  # Webhook URL
+    description: str  # Optional description
+    metadata: dict  # Optional metadata
 ```
 
 ## Error Handling
@@ -247,6 +231,7 @@ from wecom_bot_mcp_server.errors import WeComError
 os.environ["WECOM_WEBHOOK_URL"] = "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=xxx"
 os.environ["WECOM_BOT_ALERT_URL"] = "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=alert"
 
+
 async def main():
     # List available bots
     bots = list_available_bots()
@@ -259,18 +244,11 @@ async def main():
 
         # Markdown to CI bot
         await send_message(
-            content="## Build Status\n- **Result**: Success\n- **Duration**: 5m 30s",
-            msg_type="markdown",
-            bot_id="ci"
+            content="## Build Status\n- **Result**: Success\n- **Duration**: 5m 30s", msg_type="markdown", bot_id="ci"
         )
 
         # Alert with @mention
-        await send_message(
-            content="Server CPU > 90%!",
-            msg_type="text",
-            mentioned_list=["admin"],
-            bot_id="alert"
-        )
+        await send_message(content="Server CPU > 90%!", msg_type="text", mentioned_list=["admin"], bot_id="alert")
 
         # Send file
         await send_wecom_file("/path/to/report.pdf")
@@ -280,6 +258,7 @@ async def main():
 
     except WeComError as e:
         print(f"Failed: {e.message}")
+
 
 if __name__ == "__main__":
     asyncio.run(main())

@@ -7,10 +7,7 @@ WeCom Bot MCP Server supports multiple message types to meet various communicati
 Basic text messages for simple notifications.
 
 ```python
-await send_message(
-    content="Hello, World!",
-    msg_type="text"
-)
+await send_message(content="Hello, World!", msg_type="text")
 ```
 
 ### With @Mentions
@@ -18,31 +15,21 @@ await send_message(
 Mention specific users by their user ID:
 
 ```python
-await send_message(
-    content="Hello @user1 @user2, please check this",
-    msg_type="text",
-    mentioned_list=["user1", "user2"]
-)
+await send_message(content="Hello @user1 @user2, please check this", msg_type="text", mentioned_list=["user1", "user2"])
 ```
 
 Mention users by phone number:
 
 ```python
 await send_message(
-    content="Urgent: Please respond",
-    msg_type="text",
-    mentioned_mobile_list=["13800138000", "13900139000"]
+    content="Urgent: Please respond", msg_type="text", mentioned_mobile_list=["13800138000", "13900139000"]
 )
 ```
 
 Mention all members:
 
 ```python
-await send_message(
-    content="Important announcement for everyone",
-    msg_type="text",
-    mentioned_list=["@all"]
-)
+await send_message(content="Important announcement for everyone", msg_type="text", mentioned_list=["@all"])
 ```
 
 ## Markdown Messages
@@ -60,7 +47,7 @@ await send_message(
 
 > Next milestone: December 30th
 """,
-    msg_type="markdown"
+    msg_type="markdown",
 )
 ```
 
