@@ -16,6 +16,7 @@ class TestServer(unittest.TestCase):
 
     def test_sanitize_shell_function_env(self):
         """Test that exported shell functions are removed from the environment."""
+        # Import local modules
         from wecom_bot_mcp_server import server
 
         with patch.dict(

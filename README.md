@@ -264,37 +264,25 @@ If you want to use this package directly in your Python code (not as an MCP serv
 from wecom_bot_mcp_server import send_message, send_wecom_file, send_wecom_image, send_wecom_template_card
 
 # Send markdown message (uses default bot)
-await send_message(
-    content="**Hello World!**",
-    msg_type="markdown"
-)
+await send_message(content="**Hello World!**", msg_type="markdown")
 
 # Send markdown_v2 message with tables and lists (default)
 await send_message(
-    content="| Column1 | Column2 |\n|---------|---------|\\n| Value1  | Value2  |",
-    msg_type="markdown_v2"
+    content="| Column1 | Column2 |\n|---------|---------|\\n| Value1  | Value2  |", msg_type="markdown_v2"
 )
 
 # Send text message and mention users (use markdown for @mentions)
-await send_message(
-    content="Hello <@user1> <@user2>",
-    msg_type="markdown",
-    mentioned_list=["user1", "user2"]
-)
+await send_message(content="Hello <@user1> <@user2>", msg_type="markdown", mentioned_list=["user1", "user2"])
 
 # Send message to a specific bot
 await send_message(
     content="Build completed successfully!",
     msg_type="markdown_v2",
-    bot_id="ci"  # Send to CI bot
+    bot_id="ci",  # Send to CI bot
 )
 
 # Send alert to alert bot
-await send_message(
-    content="⚠️ High CPU usage detected!",
-    msg_type="markdown_v2",
-    bot_id="alert"
-)
+await send_message(content="⚠️ High CPU usage detected!", msg_type="markdown_v2", bot_id="alert")
 
 # Send file to specific bot
 await send_wecom_file("/path/to/file.txt", bot_id="ci")
@@ -309,7 +297,7 @@ await send_wecom_template_card(
     template_card_main_title={"title": "Deployment Success", "desc": "Production environment"},
     template_card_card_action={"type": 1, "url": "https://example.com/dashboard"},
     template_card_emphasis_content={"title": "100%", "desc": "Success Rate"},
-    bot_id="ci"
+    bot_id="ci",
 )
 ```
 

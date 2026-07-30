@@ -7,10 +7,7 @@ WeCom Bot MCP Server 支持多种消息类型，满足各种通信需求。
 用于简单通知的基本文本消息。
 
 ```python
-await send_message(
-    content="你好，世界！",
-    msg_type="text"
-)
+await send_message(content="你好，世界！", msg_type="text")
 ```
 
 ### 带 @提及
@@ -18,31 +15,19 @@ await send_message(
 通过用户 ID 提及特定用户：
 
 ```python
-await send_message(
-    content="你好 @user1 @user2，请查看这个",
-    msg_type="text",
-    mentioned_list=["user1", "user2"]
-)
+await send_message(content="你好 @user1 @user2，请查看这个", msg_type="text", mentioned_list=["user1", "user2"])
 ```
 
 通过手机号提及用户：
 
 ```python
-await send_message(
-    content="紧急：请回复",
-    msg_type="text",
-    mentioned_mobile_list=["13800138000", "13900139000"]
-)
+await send_message(content="紧急：请回复", msg_type="text", mentioned_mobile_list=["13800138000", "13900139000"])
 ```
 
 提及所有成员：
 
 ```python
-await send_message(
-    content="重要公告",
-    msg_type="text",
-    mentioned_list=["@all"]
-)
+await send_message(content="重要公告", msg_type="text", mentioned_list=["@all"])
 ```
 
 ## Markdown 消息
@@ -60,7 +45,7 @@ await send_message(
 
 > 下一个里程碑：12月30日
 """,
-    msg_type="markdown"
+    msg_type="markdown",
 )
 ```
 

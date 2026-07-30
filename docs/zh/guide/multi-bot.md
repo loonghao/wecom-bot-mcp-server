@@ -112,11 +112,7 @@ from wecom_bot_mcp_server import send_message, send_wecom_file, send_wecom_image
 await send_message("你好！", msg_type="text")
 
 # 发送到指定机器人
-await send_message(
-    content="⚠️ 检测到高 CPU 使用率！",
-    msg_type="markdown",
-    bot_id="alert"
-)
+await send_message(content="⚠️ 检测到高 CPU 使用率！", msg_type="markdown", bot_id="alert")
 
 # 发送文件到 CI 机器人
 await send_wecom_file("/path/to/report.pdf", bot_id="ci")
@@ -166,5 +162,6 @@ print(f"总机器人数: {registry.get_bot_count()}")
 
 ```python
 from wecom_bot_mcp_server.bot_config import list_available_bots
+
 print(list_available_bots())
 ```

@@ -112,11 +112,7 @@ from wecom_bot_mcp_server import send_message, send_wecom_file, send_wecom_image
 await send_message("Hello!", msg_type="text")
 
 # Send to specific bot
-await send_message(
-    content="⚠️ High CPU usage detected!",
-    msg_type="markdown",
-    bot_id="alert"
-)
+await send_message(content="⚠️ High CPU usage detected!", msg_type="markdown", bot_id="alert")
 
 # Send file to CI bot
 await send_wecom_file("/path/to/report.pdf", bot_id="ci")
@@ -166,5 +162,6 @@ Use the `list_wecom_bots` MCP tool or Python API to see all configured bots:
 
 ```python
 from wecom_bot_mcp_server.bot_config import list_available_bots
+
 print(list_available_bots())
 ```

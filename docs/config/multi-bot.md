@@ -157,6 +157,7 @@ What WeCom bots are available?
 Or use Python:
 ```python
 from wecom_bot_mcp_server.bot_config import list_available_bots
+
 print(list_available_bots())
 ```
 
