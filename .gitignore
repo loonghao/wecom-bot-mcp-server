@@ -68,3 +68,8 @@ __pycache__/
 
 # Hatch
 .hatch/
+
+# Monica runtime
+.monica/
+.claude/
+CLAUDE.md
