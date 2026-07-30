@@ -14,6 +14,29 @@ from wecom_bot_mcp_server.server import main
 class TestServer(unittest.TestCase):
     """Test cases for server module."""
 
+    def test_sanitize_shell_function_env(self):
+        """Test that exported shell functions are removed from the environment."""
+        from wecom_bot_mcp_server import server
+
+        with patch.dict(
+            server.os.environ,
+            {
+                "BASH_FUNC_ml%%": "() {  echo ml; }",
+                "BASH_FUNC_module%%": "() {  echo module; }",
+                "ml": "() {  echo ml; }",
+                "module": "() {  echo module; }",
+                "kept": "value",
+            },
+            clear=True,
+        ):
+            server._sanitize_shell_function_env()
+
+            self.assertNotIn("BASH_FUNC_ml%%", server.os.environ)
+            self.assertNotIn("BASH_FUNC_module%%", server.os.environ)
+            self.assertNotIn("ml", server.os.environ)
+            self.assertNotIn("module", server.os.environ)
+            self.assertEqual(server.os.environ["kept"], "value")
+
     @patch("wecom_bot_mcp_server.server.setup_logging")
     @patch("wecom_bot_mcp_server.server.logger")
     @patch("wecom_bot_mcp_server.server.mcp")
