@@ -1,3 +1,9 @@
+## v0.11.2 (2026-07-30)
+
+### Fix
+
+- pin mcp>=1.3.0,<2.0.0 and sanitize shell function env vars
+
 ## v0.11.1 (2026-06-18)
 
 ### Fix
