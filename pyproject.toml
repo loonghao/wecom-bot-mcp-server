@@ -43,17 +43,6 @@ wecom-bot-mcp-server = "wecom_bot_mcp_server.server:main"
 Homepage = "https://github.com/loonghao/wecom-bot-mcp-server"
 Issues = "https://github.com/loonghao/wecom-bot-mcp-server/issues"
 
-[tool.commitizen]
-name = "cz_conventional_commits"
-version = "0.11.2"
-tag_format = "v$version"
-version_files = [
-    "pyproject.toml:version",
-    "src/wecom_bot_mcp_server/__version__.py",
-    "smithery.yaml:version",
-    "marketplace.yaml:version",
-]
-
 [tool.pytest.ini_options]
 addopts = ""
 testpaths = ["tests"]
