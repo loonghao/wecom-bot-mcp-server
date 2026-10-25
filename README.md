@@ -12,7 +12,7 @@ A Model Context Protocol (MCP) compliant server implementation for WeCom (WeChat
 [![Python Version](https://img.shields.io/pypi/pyversions/wecom-bot-mcp-server.svg)](https://pypi.org/project/wecom-bot-mcp-server/)
 [![codecov](https://codecov.io/gh/loonghao/wecom-bot-mcp-server/branch/main/graph/badge.svg)](https://app.codecov.io/gh/loonghao/wecom-bot-mcp-server)
 [![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
-[![smithery badge](https://smithery.ai/badge/wecom-bot-mcp-server)](https://smithery.ai/server/wecom-bot-mcp-server)
+[![LightNow capabilities](https://lightnow.ai/badge/io.github.loonghao/wecom-bot-mcp-server)](https://lightnow.ai/servers/io.github.loonghao/wecom-bot-mcp-server)
 
 [English](README.md) | [中文](README_zh.md)
 
