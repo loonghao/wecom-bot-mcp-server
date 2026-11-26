@@ -12,7 +12,6 @@ A Model Context Protocol (MCP) compliant server implementation for WeCom (WeChat
 [![Python Version](https://img.shields.io/pypi/pyversions/wecom-bot-mcp-server.svg)](https://pypi.org/project/wecom-bot-mcp-server/)
 [![codecov](https://codecov.io/gh/loonghao/wecom-bot-mcp-server/branch/main/graph/badge.svg)](https://app.codecov.io/gh/loonghao/wecom-bot-mcp-server)
 [![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
-[![smithery badge](https://smithery.ai/badge/wecom-bot-mcp-server)](https://smithery.ai/server/wecom-bot-mcp-server)
 
 [English](README.md) | [中文](README_zh.md)
 
@@ -42,13 +41,7 @@ A Model Context Protocol (MCP) compliant server implementation for WeCom (WeChat
 
 There are several ways to install WeCom Bot MCP Server:
 
-### 1. Automated Installation (Recommended)
-
-#### Using Smithery (For Claude Desktop):
-
-```bash
-npx -y @smithery/cli install wecom-bot-mcp-server --client claude
-```
+### 1. Client Configuration (Recommended)
 
 #### Using VSCode with Cline Extension:
 
@@ -57,7 +50,7 @@ npx -y @smithery/cli install wecom-bot-mcp-server --client claude
 3. Search for "Cline: Install Package"
 4. Type "wecom-bot-mcp-server" and press Enter
 
-### 2. Manual Configuration
+### 2. Manual Configuration (uvx)
 
 Add the server to your MCP client configuration file:
 
