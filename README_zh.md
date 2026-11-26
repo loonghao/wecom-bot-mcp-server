@@ -10,7 +10,6 @@
 [![Python Version](https://img.shields.io/pypi/pyversions/wecom-bot-mcp-server.svg)](https://pypi.org/project/wecom-bot-mcp-server/)
 [![codecov](https://codecov.io/gh/loonghao/wecom-bot-mcp-server/branch/main/graph/badge.svg)](https://app.codecov.io/gh/loonghao/wecom-bot-mcp-server)
 [![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
-[![smithery badge](https://smithery.ai/badge/wecom-bot-mcp-server)](https://smithery.ai/server/wecom-bot-mcp-server)
 
 [English](README.md) | [中文](README_zh.md)
 
@@ -40,13 +39,7 @@
 
 有以下几种方式安装 WeCom Bot MCP Server：
 
-### 1. 自动安装（推荐）
-
-#### 使用 Smithery（适用于 Claude Desktop）：
-
-```bash
-npx -y @smithery/cli install wecom-bot-mcp-server --client claude
-```
+### 1. 客户端配置（推荐）
 
 #### 使用 VSCode 的 Cline 插件：
 
@@ -55,7 +48,7 @@ npx -y @smithery/cli install wecom-bot-mcp-server --client claude
 3. 搜索 "Cline: Install Package"
 4. 输入 "wecom-bot-mcp-server" 并按回车
 
-### 2. 手动配置
+### 2. 手动配置（uvx）
 
 将服务器添加到你的 MCP 客户端配置文件中：
 
